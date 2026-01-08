@@ -2,6 +2,7 @@ import polars as pl
 from pathlib import Path
 
 from src.utils import excel_utils
+from src.config import REQUIRED_COLUMNS, TICKET_COLUMNS
 
 class ExcelController:
     def __init__(self, excel_path: Path):
@@ -40,16 +41,20 @@ class ExcelController:
 
         self.format = excel_utils.detect_format(headers)
 
-        print("\n Header Row")
-        print(header_row)
-        print("\n Raw Headers")
-        print(raw_headers)
-        print("\n Headers")
-        print(headers)
-        print("\n Format")
-        print(self.format)
+        self.ticket_column = excel_utils.validate_required_columns(headers, REQUIRED_COLUMNS, TICKET_COLUMNS)
+
+        df_data = df_raw.slice(header_row + 1)
+
+        if self.format == "NEW":
+            df_data = df_data.slice(1)
+
+        # df_data = df_data.select(range(len(headers)))
+
+        print(df_data)
+
+        # df_data.columns = headers
+        # df_data = df_data.filter(pl.any_horizontal(pl.all().is_not_null()))
 
 
-        
-        self.df = pl.read_excel(self.excel_path, has_header=True, read_csv_options={"skip_rows": header_row})
+        self.df = df_data
 

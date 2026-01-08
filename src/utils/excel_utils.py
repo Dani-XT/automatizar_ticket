@@ -24,11 +24,9 @@ def detect_format(headers: List[str]) -> str:
     normalized = {h.upper() for h in headers}
 
     if "TKT" in normalized and "TICKET" not in normalized:
-        print("old")
         return "OLD"
     
     if "TICKET" in normalized and "EDIFICIO" in normalized:
-        print("new")
         return "NEW"
     
     raise ValueError("Formato de planilla no reconocido")
