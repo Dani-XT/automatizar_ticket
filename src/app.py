@@ -1,4 +1,5 @@
 import tkinter as tk
+
 from .views.main_view import MainView
 
 class App:

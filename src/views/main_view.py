@@ -1,5 +1,9 @@
 import os
+from pathlib import Path
 import tkinter as tk
+from tkinter import messagebox, filedialog
+
+from .error_view import ErrorView
 
 
 class MainView(tk.Frame):
@@ -7,6 +11,9 @@ class MainView(tk.Frame):
         super().__init__(master, bg="#E91A1D")
         self.assets_dir = assets_dir
         self.base_dir = base_dir
+
+        self.select_file = None
+
 
         self._load_assets()
         self._build_header()
@@ -19,6 +26,7 @@ class MainView(tk.Frame):
         self.help_img = tk.PhotoImage(file = self.assets_dir / "helper.png")
         self.config_img = tk.PhotoImage(file = self.assets_dir / "configuracion.png")
         self.send_img = tk.PhotoImage(file = self.assets_dir / "enviar.png")
+        self.clear_img = tk.PhotoImage(file = self.assets_dir / "close.png")
 
     def _build_header(self):
         header = tk.Frame(self, bg="#E91A1D")
@@ -39,6 +47,10 @@ class MainView(tk.Frame):
         input_btn = tk.Button(self, image=self.input_img, bg="#E91A1D", activebackground="#E91A1D", borderwidth=0, command=self._select_file)
         input_btn.place(x=40, y=170)
 
+        self.file_container = tk.Frame(self, bg="#FDF7F7")
+        self.file_label = tk.Label(self.file_container, text="", font=("Segoe UI", 12, "bold"), fg="#333333", bg="#FDF7F7", anchor="w")
+        self.clear_btn = tk.Button(self.file_container, image=self.clear_img, bg="#FDF7F7", activebackground="#FDF7F7", borderwidth=0, command=self._clear_file)
+
     def _build_footer(self):
         footer =tk.Frame(self, bg="#E91A1D")
         footer.place(relx=0.5, y=300, anchor="center")
@@ -49,12 +61,12 @@ class MainView(tk.Frame):
         send_btn = tk.Button(footer, image=self.send_img, bg="#E91A1D", activebackground="#E91A1D", borderwidth=0, command=self._send)
         send_btn.pack(side="left", padx=15)
 
-    
     def _open_help(self):
         help_file = self.base_dir / "readme.txt"
 
         if not help_file.exists():
-            tk.messagebox.showerror(
+            # TODO: CAMBIAR POR UN VIEW DE ERRORES
+            messagebox.showerror(
                 title="Archivo no encontrado",
                 message="No se encontró el archivo de ayuda (readme.txt)."
             )
@@ -63,17 +75,47 @@ class MainView(tk.Frame):
         try:
             os.startfile(help_file)
         except Exception as e:
-            tk.messagebox.showerror(
+            # TODO: CAMBIAR POR UN VIEW DE ERRORES
+            messagebox.showerror(
                 title="Error al abrir ayuda",
                 message=f"Ocurrió un error al intentar abrir el archivo:\n{e}"
             )
 
     def _select_file(self):
-        print("hola 2")
+        file_path = filedialog.askopenfilename(
+            title="Seleccionar planilla de Excel",
+            filetypes=[
+                ("Archivos Excel", "*.xlsx *.xls"),
+                ("Todos los archivos", "*.*")
+            ]
+        )
+
+        if not file_path:
+            return
+        
+        self.select_file = Path(file_path)
+        self.file_label.config(text=self.select_file.name)
+        if not self.file_container.winfo_ismapped():
+            self.file_label.pack(side="left", fill="x", expand=True, padx=(5, 0))
+            self.clear_btn.pack(side="right", padx=5)
+            self.file_container.place(x=55, y=180, width=480, height=24)
+        
+    def _clear_file(self):
+        self.select_file = None
+        self.file_container.place_forget()
 
     def _open_config(self):
         print("hola 3")
 
     def _send(self):
-        print("hola 4")
+        if not self.select_file:
+            messagebox.showerror(
+                title="Error al enviar",
+                message="Debe seleccionar un archivo antes de enviar"
+            )
+            return
+        
+        print("si hay archivo cargado")
+
+
 
