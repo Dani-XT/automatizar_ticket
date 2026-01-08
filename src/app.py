@@ -1,20 +1,21 @@
 import tkinter as tk
+from src import config
 
 from .views.main_view import MainView
 
 class App:
-    def __init__(self, base_dir, assets_dir):
-        self.base_dir = base_dir
-        self.assets_dir = assets_dir
+    def __init__(self):
 
         self.root = tk.Tk()
-        self.root.title("Carga automatica de Ticket")
-        self.root.geometry("637x369")
+        self.root.title(config.APP_TITLE)
+        self.root.geometry(config.APP_SIZE)
         self.root.resizable(False, False)
+
         
-        self.root.iconbitmap(self.assets_dir / "favicon.ico")
         
-        self.main_view = MainView(self.root, self.assets_dir, self.base_dir)
+        self.root.iconbitmap(config.ASSETS_DIR / "favicon.ico")
+        
+        self.main_view = MainView(self.root)
         self.main_view.pack(fill="both", expand=True)
 
     def run(self):
