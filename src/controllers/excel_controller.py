@@ -26,21 +26,14 @@ class ExcelController:
         
     def _load_excel(self):
         df_raw = pl.read_excel(self.excel_path, has_header=False)
-        
-        if df_raw is None:
-            raise RuntimeError("El archivo Excel no fue cargado correctamente")
 
         if df_raw.is_empty():
             raise ValueError("El archivo Excel no contiene datos")
-
+        
         header_row = excel_utils.detect_header_row(df_raw)
-
         raw_headers = list(df_raw.row(header_row))
-
         headers = excel_utils.clean_headers([str(h) for h in raw_headers])
-
         self.format = excel_utils.detect_format(headers)
-
         self.ticket_column = excel_utils.validate_required_columns(headers, REQUIRED_COLUMNS, TICKET_COLUMNS)
 
         df_data = df_raw.slice(header_row + 1)
@@ -48,13 +41,18 @@ class ExcelController:
         if self.format == "NEW":
             df_data = df_data.slice(1)
 
-        # df_data = df_data.select(range(len(headers)))
+        df_data = df_data.select(df_data.columns[:len(headers)])
+        df_data.columns = headers
+        df_data = df_data.filter(pl.any_horizontal(pl.all().is_not_null()))
 
-        print(df_data)
+        df_data = excel_utils.normalize_datetime_column(df_data)
 
-        # df_data.columns = headers
-        # df_data = df_data.filter(pl.any_horizontal(pl.all().is_not_null()))
-
+        df_data = excel_utils.reduce_to_core_columns(df = df_data, ticket_col= self.ticket_column)
 
         self.df = df_data
+
+
+        print(self.df)
+        self.df.write_csv("debug_output.csv")
+
 

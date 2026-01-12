@@ -14,8 +14,6 @@ APP_TITLE = "Carga automatica de Ticket"
 
 DEFAULT_USER = "chiguera@unab.cl"
 
-
-
 REQUIRED_COLUMNS = [
     "FECHA",
     "HORA",
@@ -24,4 +22,14 @@ REQUIRED_COLUMNS = [
     "TECNICO"
 ]
 
+CORE_COLUMNS = [
+    "FECHA",
+    "HORA",
+    "PROBLEMA",
+    "SOLUCION",
+    "TICKET"
+]
+
 TICKET_COLUMNS = {"TKT", "TICKET"}
+
+URL_PROACTIVA = "https://unab.proactivanet.com/proactivanet/servicedesk/default.paw"
