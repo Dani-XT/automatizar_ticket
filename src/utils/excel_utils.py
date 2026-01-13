@@ -95,4 +95,15 @@ def reduce_to_core_columns(df: pl.DataFrame, ticket_col: str) -> pl.DataFrame:
 
     return df.select(CORE_COLUMNS)
 
+def filter_pending_tickets(df: pl.DataFrame, ticket_col: str) -> pl.DataFrame:
+    return df.filter(
+        pl.col(ticket_col).is_null()
+        | (pl.col(ticket_col)
+           .cast(pl.Utf8, strict=False)
+           .str.strip_chars() == "")
+        | (pl.col(ticket_col)
+           .cast(pl.Utf8, strict=False)
+           .str.to_uppercase() == "NONE")
+    )
+
 

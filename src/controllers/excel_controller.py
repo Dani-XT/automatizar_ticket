@@ -49,10 +49,19 @@ class ExcelController:
 
         df_data = excel_utils.reduce_to_core_columns(df = df_data, ticket_col= self.ticket_column)
 
+        df_data = excel_utils.filter_pending_tickets(df=df_data, ticket_col="TICKET")
+
+        if df_data.is_empty():
+            raise ValueError("La planilla no contiene ticket pendientes para cargar")
+
         self.df = df_data
 
 
         print(self.df)
         self.df.write_csv("debug_output.csv")
 
+    def add_ticket(self):
+        pass
 
+    def return_excel(self):
+        pass
