@@ -9,7 +9,7 @@ from src import config
 
 from .error_view import ErrorView
 
-from src.controllers.excel_controller import ExcelController
+from src.controllers.main_controller import MainController
 from src.utils.tooltip import Tooltip
 
 
@@ -145,10 +145,15 @@ class MainView(tk.Frame):
             return
         
         try:
-            ExcelController(self.select_file)
+            controller = MainController(self.select_file, self._update_status)
+            controller.start()
 
         except Exception as e:
             ErrorView(self, title="Error con el excel", message=e)
+
+    def _update_status(self, message: str):
+        print(message)  # por ahora consola
+
 
 
 

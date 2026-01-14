@@ -1,7 +1,7 @@
 import polars as pl
 from pathlib import Path
 
-from src.utils import excel_utils
+from src.helpers import excel_helpers
 from src.config import REQUIRED_COLUMNS, TICKET_COLUMNS
 
 class ExcelController:
@@ -30,11 +30,11 @@ class ExcelController:
         if df_raw.is_empty():
             raise ValueError("El archivo Excel no contiene datos")
         
-        header_row = excel_utils.detect_header_row(df_raw)
+        header_row = excel_helpers.detect_header_row(df_raw)
         raw_headers = list(df_raw.row(header_row))
-        headers = excel_utils.clean_headers([str(h) for h in raw_headers])
-        self.format = excel_utils.detect_format(headers)
-        self.ticket_column = excel_utils.validate_required_columns(headers, REQUIRED_COLUMNS, TICKET_COLUMNS)
+        headers = excel_helpers.clean_headers([str(h) for h in raw_headers])
+        self.format = excel_helpers.detect_format(headers)
+        self.ticket_column = excel_helpers.validate_required_columns(headers, REQUIRED_COLUMNS, TICKET_COLUMNS)
 
         df_data = df_raw.slice(header_row + 1)
 
@@ -45,11 +45,11 @@ class ExcelController:
         df_data.columns = headers
         df_data = df_data.filter(pl.any_horizontal(pl.all().is_not_null()))
 
-        df_data = excel_utils.normalize_datetime_column(df_data)
+        df_data = excel_helpers.normalize_datetime_column(df_data)
 
-        df_data = excel_utils.reduce_to_core_columns(df = df_data, ticket_col= self.ticket_column)
+        df_data = excel_helpers.reduce_to_core_columns(df = df_data, ticket_col= self.ticket_column)
 
-        df_data = excel_utils.filter_pending_tickets(df=df_data, ticket_col="TICKET")
+        df_data = excel_helpers.filter_pending_tickets(df=df_data, ticket_col="TICKET")
 
         if df_data.is_empty():
             raise ValueError("La planilla no contiene ticket pendientes para cargar")
@@ -60,8 +60,9 @@ class ExcelController:
         print(self.df)
         self.df.write_csv("debug_output.csv")
 
-    def add_ticket(self):
-        pass
+    def add_ticket(self, job):
+        print(f"✍️ Registrando ticket en Excel fila {job.row_id}")
+
 
     def return_excel(self):
         pass
