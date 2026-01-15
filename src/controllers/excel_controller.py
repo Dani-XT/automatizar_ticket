@@ -57,7 +57,6 @@ class ExcelController:
         self.df = df_data
 
 
-        print(self.df)
         self.df.write_csv("debug_output.csv")
 
     def add_ticket(self, job):

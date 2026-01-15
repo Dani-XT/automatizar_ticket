@@ -2,7 +2,12 @@ from pathlib import Path
 
 # BASE PATH
 BASE_DIR = Path(__file__).resolve().parent.parent
+STORAGE_DIR = BASE_DIR / "storages"
+
+STATES_DIR = STORAGE_DIR / "states"
+
 SRC_DIR = BASE_DIR / "src"
+
 ASSETS_DIR = SRC_DIR / "assets"
 ICON_DIR = ASSETS_DIR / "icon"
 IMG_DIR = ASSETS_DIR / "img"

@@ -15,6 +15,7 @@ class App:
         
         self.main_view = MainView(self.root)
         self.main_view.pack(fill="both", expand=True)
+
     
     def _load_task_icon(self):
         try:
@@ -27,6 +28,7 @@ class App:
             self.root.iconbitmap(str(config.ASSETS_DIR / "favicon.ico"))
         except Exception:
             pass
+
 
     def run(self):
         self.root.mainloop()

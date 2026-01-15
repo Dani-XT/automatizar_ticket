@@ -1,5 +1,7 @@
 from pathlib import Path
 
+from src.config import STORAGE_DIR
+
 from src.controllers.excel_controller import ExcelController
 from src.controllers.web_controller import WebController
 from src.models.ticket_job import TicketJob
@@ -18,27 +20,6 @@ class MainController:
 
         self._load_jobs()
 
-    def _emit(self, message: str):
-        if self.on_status:
-            self.on_status(message)
-        else:
-            print(message)
-
-    def _load_jobs(self):
-        rows = self.excel_ctrl.df.to_dicts()
-
-        for i, row in enumerate(rows):
-            stored = self.state_store.get_job(i)
-
-            job = TicketJob(data=row, row_id=i)
-
-            if stored:
-                job.status = stored["status"]
-                job.ticket_id = stored.get("ticket_id")
-                job.error = stored.get("error")
-
-            self.jobs.append(job)
-
     # =========================
     # PROCESO PRINCIPAL
     # =========================
@@ -48,6 +29,9 @@ class MainController:
         self.web_ctrl.start()
 
         for job in self.jobs:
+
+            print(job.status)
+
             if job.status != "PENDING":
                 continue
 
@@ -55,7 +39,10 @@ class MainController:
 
             self.state_store.set_job(job.row_id, "IN_PROGRESS")
 
+
             result = self._process_job(job)
+
+            
 
             if result["success"]:
                 job.status = "CREATED"
@@ -83,7 +70,7 @@ class MainController:
 
                 self._emit(f"❌ Error en fila {job.row_id}: {job.error}")
 
-        input("Seleccione enter para continuar... ")
+        print("proceso finalizado")
         # self.web_ctrl.close()
         # self._emit("🏁 Proceso finalizado")
 
@@ -103,3 +90,23 @@ class MainController:
                 "success": False,
                 "error": str(e)
             }
+        
+    def _emit(self, message: str):
+        if self.on_status:
+            self.on_status(message)
+        else:
+            print(message)
+
+    def _load_jobs(self):
+        rows = self.excel_ctrl.df.to_dicts()
+
+        for i, row in enumerate(rows):
+            stored = self.state_store.get_job(i)
+
+            job = TicketJob(data=row, row_id=i)
+
+            if stored:
+                job.status = stored["status"]
+                job.ticket_id = stored.get("ticket_id")
+                job.error = stored.get("error")
+

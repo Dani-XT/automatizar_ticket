@@ -1,7 +1,7 @@
 from pathlib import Path
 from playwright.sync_api import sync_playwright, TimeoutError as PWTimeoutError
 
-from src.config import URL_PROACTIVA, BASE_DIR
+from src.config import URL_PROACTIVA, STORAGE_DIR
 from src.helpers.web_helpers import get_default_browser, chrome_installed
 
 
@@ -13,7 +13,7 @@ class WebController:
         self.page = None
 
         # Guarda sesión para evitar MFA repetitivo (primera vez login manual)
-        self.state_path = BASE_DIR / "proactiva_storage_state.json"
+        self.state_path = STORAGE_DIR / "proactiva_storage_state.json"
 
     # =========================
     # CICLO DE VIDA
