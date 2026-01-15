@@ -5,6 +5,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 STORAGE_DIR = BASE_DIR / "storages"
 
 STATES_DIR = STORAGE_DIR / "states"
+WEB_STORAGE_DIR = STORAGE_DIR / "web"
 
 SRC_DIR = BASE_DIR / "src"
 

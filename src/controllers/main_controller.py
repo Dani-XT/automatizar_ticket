@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from src.config import STORAGE_DIR
+from src.config import STATES_DIR
 
 from src.controllers.excel_controller import ExcelController
 from src.controllers.web_controller import WebController
@@ -13,7 +13,9 @@ class MainController:
         self.excel_ctrl = ExcelController(excel_path)
         self.web_ctrl = WebController()
 
-        self.state_store = StateStore(path=excel_path.with_suffix(".state.json"))
+
+        state_path = (STATES_DIR / f"{excel_path.stem}.state.json")
+        self.state_store = StateStore(state_path)
 
         self.jobs = []
         self.on_status = on_status
@@ -28,9 +30,12 @@ class MainController:
 
         self.web_ctrl.start()
 
+        print("jobs")
+        print(self.jobs)
+
         for job in self.jobs:
 
-            print(job.status)
+            print("job")
 
             if job.status != "PENDING":
                 continue
@@ -109,4 +114,6 @@ class MainController:
                 job.status = stored["status"]
                 job.ticket_id = stored.get("ticket_id")
                 job.error = stored.get("error")
+            
+            self.jobs.append(job)
 
