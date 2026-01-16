@@ -1,11 +1,9 @@
 from pathlib import Path
 
-from src.config import STATES_DIR
-
 from src.controllers.excel_controller import ExcelController
 from src.controllers.web_controller import WebController
+from src.services.job_state_manager import JobStateManager
 from src.models.ticket_job import TicketJob
-from src.utils.state_store import StateStore
 
 
 class MainController:
@@ -13,11 +11,9 @@ class MainController:
         self.excel_ctrl = ExcelController(excel_path)
         self.web_ctrl = WebController()
 
+        self.state = JobStateManager(excel_path)
 
-        state_path = (STATES_DIR / f"{excel_path.stem}.state.json")
-        self.state_store = StateStore(state_path)
-
-        self.jobs = []
+        self.jobs: list[TicketJob] = []
         self.on_status = on_status
 
         self._load_jobs()
@@ -30,54 +26,25 @@ class MainController:
 
         self.web_ctrl.start()
 
-        print("jobs")
-        print(self.jobs)
-
         for job in self.jobs:
-
-            print("job")
-
             if job.status != "PENDING":
                 continue
 
             self._emit(f"➡️ Procesando fila {job.row_id}")
-
-            self.state_store.set_job(job.row_id, "IN_PROGRESS")
-
+            self.state.mark_in_progress(job)
 
             result = self._process_job(job)
 
-            
-
             if result["success"]:
-                job.status = "CREATED"
-                job.ticket_id = result["ticket_id"]
-
                 self.excel_ctrl.add_ticket(job)
-
-                self.state_store.set_job(
-                    job.row_id,
-                    "CREATED",
-                    ticket_id=job.ticket_id
-                )
-
-                self._emit(f"✅ Ticket creado: {job.ticket_id}")
+                self.state.mark_created(job, result["ticket_id"])
+                self._emit(f"✅ Ticket creado: {result['ticket_id']}")
 
             else:
-                job.status = "FAILED"
-                job.error = result["error"]
+                self.state.mark_failed(job, result["error"])
+                self._emit(f"❌ Error en fila {job.row_id}: {result['error']}")
 
-                self.state_store.set_job(
-                    job.row_id,
-                    "FAILED",
-                    error=job.error
-                )
-
-                self._emit(f"❌ Error en fila {job.row_id}: {job.error}")
-
-        print("proceso finalizado")
-        # self.web_ctrl.close()
-        # self._emit("🏁 Proceso finalizado")
+        self._emit("🏁 Proceso finalizado")
 
     # =========================
     # PROCESO INDIVIDUAL
@@ -85,7 +52,7 @@ class MainController:
     def _process_job(self, job: TicketJob):
         try:
             self.web_ctrl.open_new_incident()
-            # aquí luego se completará el formulario
+            # luego: completar formulario web
             return {
                 "success": True,
                 "ticket_id": "REQ-2026-XXXX"
@@ -95,25 +62,23 @@ class MainController:
                 "success": False,
                 "error": str(e)
             }
-        
+
+    # =========================
+    # CARGA DE JOBS
+    # =========================
+    def _load_jobs(self):
+        rows = self.excel_ctrl.df.to_dicts()
+
+        for i, row in enumerate(rows):
+            job = TicketJob(data=row, row_id=i)
+            self.state.hydrate_job(job)
+            self.jobs.append(job)
+
+    # =========================
+    # EMISIÓN DE ESTADO
+    # =========================
     def _emit(self, message: str):
         if self.on_status:
             self.on_status(message)
         else:
             print(message)
-
-    def _load_jobs(self):
-        rows = self.excel_ctrl.df.to_dicts()
-
-        for i, row in enumerate(rows):
-            stored = self.state_store.get_job(i)
-
-            job = TicketJob(data=row, row_id=i)
-
-            if stored:
-                job.status = stored["status"]
-                job.ticket_id = stored.get("ticket_id")
-                job.error = stored.get("error")
-            
-            self.jobs.append(job)
-

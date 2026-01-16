@@ -1,10 +1,11 @@
 import json
 from pathlib import Path
+from src.config import STATES_DIR
 
 
 class StateStore:
-    def __init__(self, path: Path):
-        self.path = path
+    def __init__(self, excel_path: Path):
+        self.path = STATES_DIR / f"{excel_path.stem}.state.json"
         self.state = {
             "version": 1,
             "jobs": []
