@@ -18,9 +18,6 @@ class MainController:
 
         self._load_jobs()
 
-    # =========================
-    # PROCESO PRINCIPAL
-    # =========================
     def start(self):
         self._emit("🧭 Iniciando proceso de carga de tickets")
 
@@ -46,9 +43,7 @@ class MainController:
 
         self._emit("🏁 Proceso finalizado")
 
-    # =========================
-    # PROCESO INDIVIDUAL
-    # =========================
+
     def _process_job(self, job: TicketJob):
         try:
             self.web_ctrl.open_new_incident()
@@ -63,9 +58,6 @@ class MainController:
                 "error": str(e)
             }
 
-    # =========================
-    # CARGA DE JOBS
-    # =========================
     def _load_jobs(self):
         rows = self.excel_ctrl.df.to_dicts()
 

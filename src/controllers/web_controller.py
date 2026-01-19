@@ -2,8 +2,14 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright, TimeoutError as PWTimeoutError
 
 from src.config import URL_PROACTIVA, WEB_STORAGE_DIR
-from src.helpers.web_helpers import get_default_browser, chrome_installed
-
+from src.helpers.web_helpers import (
+    get_default_browser,
+    chrome_installed,
+    find_in_all_frames,
+    wait_visible_enabled,
+    debug_dump,
+    smart_click,
+)
 
 
 
@@ -14,55 +20,20 @@ class WebController:
         self.context = None
         self.page = None
 
-        # Guarda sesión para evitar MFA repetitivo (primera vez login manual)
         self.state_path = WEB_STORAGE_DIR / "proactiva_storage_state.json"
 
-    # =========================
-    # CICLO DE VIDA
-    # =========================
     def start(self):
         print("🌐 Iniciando WebController...")
 
         self.playwright = sync_playwright().start()
+        self.browser = self._select_browser()
+        self.context = self._get_context()
 
-        browser_channel = get_default_browser()
-        if not browser_channel:
-            if chrome_installed():
-                browser_channel = "chrome"
-            else:
-                raise RuntimeError(
-                    "No se detectó un navegador compatible.\n"
-                    "Instala Google Chrome o Microsoft Edge."
-                )
+        # # (Opcional) logs de consola para debug
+        # self.page = self.context.new_page()
+        # self.page.on("console", lambda msg: print(f"🖥️ console[{msg.type}]: {msg.text}"))
 
-        print(f"🧭 Navegador: {browser_channel}")
-
-        self.browser = self.playwright.chromium.launch(
-            channel=browser_channel,
-            headless=False,
-            args=[
-                "--start-maximized",
-                "--disable-blink-features=AutomationControlled",
-            ],
-        )
-
-        context_kwargs = {"viewport": None}
-
-        # Si ya existe sesión guardada, la reutilizamos
-        if self.state_path.exists():
-            context_kwargs["storage_state"] = str(self.state_path)
-            print(f"🔁 Usando sesión guardada: {self.state_path.name}")
-
-        self.context = self.browser.new_context(**context_kwargs)
-
-        # (Opcional) logs de consola para debug
-        self.page = self.context.new_page()
-        self.page.on("console", lambda msg: print(f"🖥️ console[{msg.type}]: {msg.text}"))
-
-        # Ir a la página
         self.page.goto(URL_PROACTIVA, wait_until="domcontentloaded", timeout=60_000)
-
-        # Esperar login (si no hay sesión válida)
         self._wait_for_login_and_save_state()
 
         print("✅ WebController listo")
@@ -128,6 +99,44 @@ class WebController:
                 raise PWTimeoutError("Locator visible pero no habilitado a tiempo")
 
             self.page.wait_for_timeout(200)
+
+    # =========================
+    # SELECT BROWSER TODO:
+    # =========================
+    def _select_browser(self):
+        """ Selecciona el navegador a utilizar """
+        browser_channel = get_default_browser()
+
+        if not browser_channel:
+            if chrome_installed():
+                browser_channel = "chrome"
+            else:
+                raise RuntimeError("No se detecto un navegador compatible. Instala Google Chrome o Microsoft Edge")
+        
+        print(f"🧭 Navegador: {browser_channel}")
+
+        return self.playwright.chromium.launch(
+            channel=browser_channel,
+            headless=False,
+            args=[
+                "--start-maximized" 
+                "--disable-blink-features=AutomationControlled"
+            ],
+        )
+    
+    # =========================
+    # GET CONTEXT TODO:
+    # =========================
+    def _get_context(self):
+        """ Decide si existe una sesion ya iniciada o se tiene que iniciar una """
+        context_kwargs = {"viewport": None}
+
+        if self.state_path.exists():
+            context_kwargs["storage_state"] = str(self.state_path)
+            print(f"🔁 Usando sesión guardada: {self.state_path.name}")
+
+        return self.browser.new_context(**context_kwargs)
+
 
     # =========================
     # AUTENTICACIÓN
