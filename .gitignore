@@ -20,6 +20,8 @@ node_modules/
 
 *.env
 
+./storages/
+
 # Distribution / packaging
 .Python
 build/
