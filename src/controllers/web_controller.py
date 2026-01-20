@@ -7,7 +7,6 @@ from src.helpers.web_helpers import (
     chrome_installed,
     find_in_all_frames,
     wait_visible_enabled,
-    debug_dump,
     smart_click,
 )
 
@@ -29,8 +28,8 @@ class WebController:
         self.browser = self._select_browser()
         self.context = self._get_context()
 
+        self.page = self.context.new_page()
         # # (Opcional) logs de consola para debug
-        # self.page = self.context.new_page()
         # self.page.on("console", lambda msg: print(f"🖥️ console[{msg.type}]: {msg.text}"))
 
         self.page.goto(URL_PROACTIVA, wait_until="domcontentloaded", timeout=60_000)
@@ -49,60 +48,7 @@ class WebController:
             if self.playwright:
                 self.playwright.stop()
 
-    # =========================
-    # HELPERS (FRAMES + LOCATORS)
-    # =========================
-    def _find_in_all_frames(self, css_selector: str):
-        """
-        Retorna el primer locator que exista (count > 0) buscando en:
-        - page (main frame)
-        - todos los iframes
-        """
-        candidates = []
 
-        # Main frame
-        candidates.append(self.page.locator(css_selector))
-
-        # Iframes
-        for frame in self.page.frames:
-            # Ojo: frame también incluye main frame, no pasa nada si se repite
-            candidates.append(frame.locator(css_selector))
-
-        for loc in candidates:
-            try:
-                if loc.count() > 0:
-                    return loc
-            except Exception:
-                # Si algún frame está en transición, ignoramos y seguimos
-                continue
-
-        return None
-
-    def _wait_visible_enabled(self, locator, timeout_ms: int):
-        """
-        Espera a que exista, sea visible y esté habilitado.
-        """
-        locator.wait_for(state="visible", timeout=timeout_ms)
-        # enabled a veces requiere evaluar; hacemos un pequeño loop seguro
-        self.page.wait_for_timeout(200)  # micro-respiro de render
-
-        # Si está visible pero deshabilitado por overlay, reintenta un poco
-        end = self.page.context._impl_obj._loop.time() + (timeout_ms / 1000)
-        while True:
-            try:
-                if locator.is_enabled():
-                    return
-            except Exception:
-                pass
-
-            if self.page.context._impl_obj._loop.time() >= end:
-                raise PWTimeoutError("Locator visible pero no habilitado a tiempo")
-
-            self.page.wait_for_timeout(200)
-
-    # =========================
-    # SELECT BROWSER TODO:
-    # =========================
     def _select_browser(self):
         """ Selecciona el navegador a utilizar """
         browser_channel = get_default_browser()
@@ -124,9 +70,6 @@ class WebController:
             ],
         )
     
-    # =========================
-    # GET CONTEXT TODO:
-    # =========================
     def _get_context(self):
         """ Decide si existe una sesion ya iniciada o se tiene que iniciar una """
         context_kwargs = {"viewport": None}
@@ -137,6 +80,12 @@ class WebController:
 
         return self.browser.new_context(**context_kwargs)
 
+    def _save_context(self):
+        try:
+            self.context.storage_state(path=str(self.state_path))
+            print(f"💾 Sesión guardada en: {self.state_path.name}")
+        except Exception as e:
+            print(f"⚠️ No se pudo guardar storage_state: {e}")
 
     # =========================
     # AUTENTICACIÓN
@@ -153,8 +102,6 @@ class WebController:
         try:
             locator = self._wait_for_new_incident(timeout_ms=180_000)
         except PWTimeoutError:
-            # Debug básico
-            self._debug_dump("login_timeout")
             raise RuntimeError(
                 "No se detectó autenticación en ProactivaNet.\n"
                 "Inicia sesión manualmente (incluido MFA) y asegúrate de llegar a la pantalla donde exista 'Nueva incidencia'."
@@ -162,27 +109,19 @@ class WebController:
 
         print("✅ Login detectado correctamente")
 
-        # Guardar sesión para el próximo run (si no existía o si cambió)
-        try:
-            self.context.storage_state(path=str(self.state_path))
-            print(f"💾 Sesión guardada en: {self.state_path.name}")
-        except Exception as e:
-            print(f"⚠️ No se pudo guardar storage_state: {e}")
+        self._save_context()
 
         return locator
 
     def _wait_for_new_incident(self, timeout_ms: int = 180_000):
-        """
-        Espera hasta que exista #newIncident en main frame o iframes.
-        """
+        """ Espera hasta que exista #newIncident en main frame o iframes. """
         step = 500
         waited = 0
 
         while waited < timeout_ms:
-            loc = self._find_in_all_frames("#newIncident")
+            loc = find_in_all_frames(self.page, "#newIncident")
             if loc:
-                # Aseguramos visible y habilitado antes de devolver
-                self._wait_visible_enabled(loc, timeout_ms=min(10_000, timeout_ms - waited))
+                wait_visible_enabled(self.page, loc, timeout_ms=min(10_000, timeout_ms - waited))
                 return loc
 
             self.page.wait_for_timeout(step)
@@ -190,22 +129,6 @@ class WebController:
 
         raise PWTimeoutError("Timeout esperando #newIncident")
 
-    def _debug_dump(self, tag: str):
-        """
-        Material de diagnóstico rápido.
-        """
-        try:
-            self.page.screenshot(path=f"debug_{tag}.png", full_page=True)
-            print(f"📸 Screenshot: debug_{tag}.png")
-        except Exception:
-            pass
-
-        try:
-            html = self.page.content()
-            Path(f"debug_{tag}.html").write_text(html, encoding="utf-8")
-            print(f"📄 HTML: debug_{tag}.html")
-        except Exception:
-            pass
 
     # =========================
     # ACCIONES
@@ -213,12 +136,12 @@ class WebController:
     def open_new_incident(self):
         print("🆕 Abriendo nueva incidencia...")
 
-        locator = self._find_in_all_frames("#newIncident")
+        locator = find_in_all_frames(self.page, "#newIncident")
         if not locator:
-            self._debug_dump("newIncident_not_found")
             raise RuntimeError("No se encontró #newIncident (ni en main frame ni en iframes).")
 
-        # Scroll por si está fuera de viewport
+        # smart_click(self.page, locator, expect_nav=True, nav_timeout_ms=30_000)
+
         try:
             locator.scroll_into_view_if_needed(timeout=5_000)
         except Exception:
@@ -245,7 +168,12 @@ class WebController:
                 try:
                     locator.click(force=True, timeout=10_000)
                 except Exception:
-                    self._debug_dump("click_failed")
                     raise RuntimeError(f"No se pudo presionar #newIncident: {e}")
 
         print("✅ Click en nueva incidencia ejecutado")
+
+    def _check_date(self):
+        pass
+
+    def _check_user(self):
+        pass
