@@ -51,7 +51,6 @@ class WebController:
             if self.playwright:
                 self.playwright.stop()
 
-
     def _select_browser(self):
         """ Selecciona el navegador a utilizar """
         browser_channel = get_default_browser()
@@ -68,9 +67,9 @@ class WebController:
             channel=browser_channel,
             headless=False,
             args=[
-                "--start-maximized" 
-                "--disable-blink-features=AutomationControlled"
-            ],
+                "--start-maximized",
+                "--disable-blink-features=AutomationControlled",
+            ]
         )
     
     def _get_context(self):
@@ -99,8 +98,6 @@ class WebController:
         Si aparece, guarda storage_state para evitar MFA en próximas ejecuciones.
         """
         print("🔐 Esperando login del usuario (manual si aplica)...")
-
-        # Si ya hay sesión guardada, puede que entre directo; igual validamos.
         locator = None
         try:
             locator = self._wait_for_new_incident(timeout_ms=180_000)

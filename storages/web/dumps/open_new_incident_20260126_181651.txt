@@ -1,0 +1,20 @@
+TAG: open_new_incident
+URL: https://unab.proactivanet.com/proactivanet/servicedesk/default.paw
+TITLE: Proactivanet Service Desk
+
+FRAMES:
+  [0] name=(no-name) url=https://unab.proactivanet.com/proactivanet/servicedesk/default.paw
+  [1] name=pawMenuTopFrame url=https://unab.proactivanet.com/proactivanet/servicedesk/menuTop.paw
+  [2] name=pawMenuTabFrame url=https://unab.proactivanet.com/proactivanet/servicedesk/menuTab.paw
+  [3] name=pawContentFrame url=https://unab.proactivanet.com/proactivanet/servicedesk/incidents/formIncidents/formIncidents.paw?pawFormMode=new
+  [4] name=pawId136226132 url=about:blank
+  [5] name=pawId43910044 url=about:blank
+  [6] name=pawId2105469567 url=about:blank
+  [7] name=pawId548048320 url=about:blank
+  [8] name=pawId652156334 url=about:blank
+  [9] name=pawId5028042 url=about:blank
+  [10] name=pawId565702622 url=about:blank
+  [11] name=pawId960562881 url=about:blank
+  [12] name=pawId1577144417 url=about:blank
+  [13] name=fd99d897-e67f-44b0-bed8-bafbb627aff7_iFrame_1 url=about:blank
+  [14] name=af047423-3f07-4a82-94a1-e6002cf0bfbc_iFrame_2 url=about:blank

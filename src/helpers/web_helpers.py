@@ -100,3 +100,4 @@ def smart_click(page, locator, expect_nav: bool = True, nav_timeout_ms: int = 30
         locator.click(timeout=10_000)
     except Exception:
         locator.click(force=True, timeout=10_000)
+
