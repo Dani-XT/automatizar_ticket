@@ -47,8 +47,11 @@ class MainController:
     def _process_job(self, job: TicketJob):
         try:
             self.web_ctrl.open_new_incident()
-            creation_dt_text = self.web_ctrl.ensure_creation_datetime(job)
-            job.creation_dt_text = creation_dt_text
+            self.web_ctrl.open_creation_date()
+
+            # creation_dt_text = self.web_ctrl.ensure_creation_datetime(job)
+            # print(creation_dt_text)
+            # job.creation_dt_text = creation_dt_text
 
             # TODO: completar formulario con PROBLEMA, SOLUCION, TECNICO, etc.
             # ticket_id_real = self.web_ctrl.submit_incident(...)

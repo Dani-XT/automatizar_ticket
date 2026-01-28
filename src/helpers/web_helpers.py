@@ -22,17 +22,23 @@ def chrome_installed() -> bool:
         or Path(r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe").exists()
 
 def find_in_all_frames(page, css_selector: str):
-    candidates = [page.locator(css_selector)]
-    for frame in page.frames:
-        candidates.append(frame.locator(css_selector))
+    loc = page.main_frame.locator(css_selector)
+    try:
+        if loc.count() > 0:
+            return loc, page.main_frame
+    except Exception:
+        pass
 
-    for loc in candidates:
+    # iframes
+    for frame in page.frames:
+        loc = frame.locator(css_selector)
         try:
             if loc.count() > 0:
-                return loc
+                return loc, frame
         except Exception:
             continue
-    return None
+
+    return None, None
 
 
 def wait_visible_enabled(page, locator, timeout_ms: int):
@@ -73,31 +79,19 @@ def debug_dump(page, tag: str, out_dir: Path | None = None):
         pass
 
 
-def smart_click(page, locator, expect_nav: bool = True, nav_timeout_ms: int = 30_000):
-    # scroll
+def smart_click(locator, frame=None, expect_nav: bool = False, nav_timeout_ms: int = 30_000):
     try:
         locator.scroll_into_view_if_needed(timeout=5_000)
     except Exception:
         pass
 
-    # trial click
-    try:
-        locator.click(trial=True, timeout=5_000)
-    except Exception:
-        page.wait_for_timeout(500)
-
-    if expect_nav:
+    if expect_nav and frame is not None:
         try:
-            with page.expect_navigation(wait_until="domcontentloaded", timeout=nav_timeout_ms):
+            with frame.expect_navigation(wait_until="domcontentloaded", timeout=nav_timeout_ms):
                 locator.click(timeout=10_000)
             return
         except PWTimeoutError:
-            # Puede ser AJAX, seguimos a click normal
             pass
 
-    # click normal + force fallback
-    try:
-        locator.click(timeout=10_000)
-    except Exception:
-        locator.click(force=True, timeout=10_000)
+    locator.click(timeout=10_000)
 

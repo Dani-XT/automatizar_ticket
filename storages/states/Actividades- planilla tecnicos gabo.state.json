@@ -3,81 +3,81 @@
   "jobs": [
     {
       "row_id": 0,
-      "status": "FAILED",
-      "ticket_id": null,
-      "error": "Locator.click: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator(\"#newIncident\")\n"
+      "status": "CREATED",
+      "ticket_id": "REQ-2026-XXXX",
+      "error": null
     },
     {
       "row_id": 1,
       "status": "FAILED",
       "ticket_id": null,
-      "error": "No se encontró #newIncident (ni en main frame ni en iframes)."
+      "error": "No se encontró #newIncident."
     },
     {
       "row_id": 2,
       "status": "FAILED",
       "ticket_id": null,
-      "error": "No se encontró #newIncident (ni en main frame ni en iframes)."
+      "error": "No se encontró #newIncident."
     },
     {
       "row_id": 3,
       "status": "FAILED",
       "ticket_id": null,
-      "error": "No se encontró #newIncident (ni en main frame ni en iframes)."
+      "error": "No se encontró #newIncident."
     },
     {
       "row_id": 4,
       "status": "FAILED",
       "ticket_id": null,
-      "error": "No se encontró #newIncident (ni en main frame ni en iframes)."
+      "error": "No se encontró #newIncident."
     },
     {
       "row_id": 5,
       "status": "FAILED",
       "ticket_id": null,
-      "error": "No se encontró #newIncident (ni en main frame ni en iframes)."
+      "error": "No se encontró #newIncident."
     },
     {
       "row_id": 6,
       "status": "FAILED",
       "ticket_id": null,
-      "error": "No se encontró #newIncident (ni en main frame ni en iframes)."
+      "error": "No se encontró #newIncident."
     },
     {
       "row_id": 7,
       "status": "FAILED",
       "ticket_id": null,
-      "error": "No se encontró #newIncident (ni en main frame ni en iframes)."
+      "error": "No se encontró #newIncident."
     },
     {
       "row_id": 8,
       "status": "FAILED",
       "ticket_id": null,
-      "error": "No se encontró #newIncident (ni en main frame ni en iframes)."
+      "error": "No se encontró #newIncident."
     },
     {
       "row_id": 9,
       "status": "FAILED",
       "ticket_id": null,
-      "error": "No se encontró #newIncident (ni en main frame ni en iframes)."
+      "error": "No se encontró #newIncident."
     },
     {
       "row_id": 10,
       "status": "FAILED",
       "ticket_id": null,
-      "error": "No se encontró #newIncident (ni en main frame ni en iframes)."
+      "error": "No se encontró #newIncident."
     },
     {
       "row_id": 11,
       "status": "FAILED",
       "ticket_id": null,
-      "error": "No se encontró #newIncident (ni en main frame ni en iframes)."
+      "error": "No se encontró #newIncident."
     },
     {
       "row_id": 12,
       "status": "FAILED",
       "ticket_id": null,
-      "error": "No se encontró #newIncident (ni en main frame ni en iframes)."
+      "error": "No se encontró #newIncident."
     }
   ]
 }

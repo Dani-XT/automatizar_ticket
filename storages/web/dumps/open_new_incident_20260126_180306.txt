@@ -1,9 +1,0 @@
-TAG: open_new_incident
-URL: https://unab.proactivanet.com/proactivanet/servicedesk/default.paw
-TITLE: Proactivanet Service Desk
-
-FRAMES:
-  [0] name=(no-name) url=https://unab.proactivanet.com/proactivanet/servicedesk/default.paw
-  [1] name=pawMenuTopFrame url=https://unab.proactivanet.com/proactivanet/servicedesk/menuTop.paw
-  [2] name=pawMenuTabFrame url=https://unab.proactivanet.com/proactivanet/servicedesk/menuTab.paw
-  [3] name=pawContentFrame url=https://unab.proactivanet.com/proactivanet/servicedesk/startPanel/startPanel.paw
