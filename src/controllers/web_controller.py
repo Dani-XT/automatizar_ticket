@@ -146,17 +146,46 @@ class WebController:
 
     def open_creation_date(self):
         print("🆕 Abriendo DateTime...")
-        locator, frame = find_in_all_frames(self.page, "#creationDate #pawTheTgt")
+        locator, frame = find_in_all_frames(self.page, "#creationDate button[paw\\:handler='pawDataFieldDate_btnShowPopCal']")
         if not locator:
             raise RuntimeError("No se encontro #creationDate #pawTheTgt (ni en main frame ni en iframes).")
         
         smart_click(locator, frame=frame, expect_nav=True)
+
         print("✅ Click en Creation Date ejecutado")
+        popup = self._get_visible_calendar_popup()
+        print("✅ Popup calendario abierto")
+        print(self.get_visible_calendar_title_text())
+        return popup
 
 
+    def get_visible_calendar_title_text(self) -> str:
+        popup = self._get_visible_calendar_popup()
+
+        label = popup.locator("td#pawTheLabelTgt")
+        label.wait_for(state="visible", timeout=10_000)
+
+        return label.inner_text().strip()
 
 
+    def _get_visible_calendar_popup(self):
+        for fr in self.page.frames:
+            popups = fr.locator("span.pawCalPopup")
+            try:
+                count = popups.count()
+            except Exception:
+                continue
 
+            for i in range(count):
+                p = popups.nth(i)
+                try:
+                    if p.is_visible():
+                        if p.locator("td#pawTheLabelTgt").count() > 0:
+                            return p
+                except Exception:
+                    continue
+
+        raise RuntimeError("No se encontró un popup de calendario visible (span.pawCalPopup).")
 
     # def get_creation_datetime_text(self) -> str:
     #     # ojo: pawTheTgt se repite en otros campos, por eso lo anclamos a #creationDate
