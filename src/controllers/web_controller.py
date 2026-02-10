@@ -10,6 +10,8 @@ from src.helpers.web_helpers import (
     smart_click,
 )
 
+from src.models.ticket_job import TicketJob
+
 MONTHS_ES = {
     1: "enero", 2: "febrero", 3: "marzo", 4: "abril", 5: "mayo", 6: "junio",
     7: "julio", 8: "agosto", 9: "septiembre", 10: "octubre", 11: "noviembre", 12: "diciembre",
@@ -144,7 +146,7 @@ class WebController:
 
         print("✅ Click en nueva incidencia ejecutado")
 
-    def open_creation_date(self):
+    def open_creation_date(self, job: TicketJob):
         print("🆕 Abriendo DateTime...")
         locator, frame = find_in_all_frames(self.page, "#creationDate button[paw\\:handler='pawDataFieldDate_btnShowPopCal']")
         if not locator:
