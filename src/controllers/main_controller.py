@@ -47,7 +47,12 @@ class MainController:
     def _process_job(self, job: TicketJob):
         try:
             self.web_ctrl.open_new_incident()
-            self.web_ctrl.ensure_creation_datetime(job)
+            creation_dt_text = self.web_ctrl.ensure_creation_datetime(job)
+
+            print(creation_dt_text)
+
+            if not job.data.get("FECHA"):
+                job.creation_dt_text = creation_dt_text
 
             # creation_dt_text = self.web_ctrl.ensure_creation_datetime(job)
             # print(creation_dt_text)

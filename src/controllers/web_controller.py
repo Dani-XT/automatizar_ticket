@@ -146,6 +146,7 @@ class WebController:
 
         print("✅ Click en nueva incidencia ejecutado")
 
+    # selecciona fecha, hora y minutos
     def ensure_creation_datetime(self, job: TicketJob):
         excel_date = job.data.get("FECHA")
         excel_time = job.data.get("HORA")
@@ -165,16 +166,16 @@ class WebController:
 
         self._calendar_goto_month_year(popup, excel_date.year, excel_date.month)
         self._calendar_select_day(popup, excel_date)
-        # self._calendar_select_time(excel_time)
+        self._calendar_select_time(excel_time)
+
+        print(excel_time)
         
         final_text = self.get_creation_datetime_text()
         print(f"creationDate final: {final_text}")
         return final_text
 
+    # devuelve la fecha actual
     def get_creation_datetime_text(self) -> str:
-        """
-        Obtiene la fecha general y la devuelve cuando la fecha en excel esta vacia
-        """
         locator, frame = find_in_all_frames(self.page, "#creationDate #pawTheTgt")
         if not locator:
             raise RuntimeError("No se encontró el texto del campo creationDate (#creationDate #pawTheTgt).")
@@ -213,17 +214,67 @@ class WebController:
 
         raise RuntimeError("No se encontró un popup de calendario visible (span.pawCalPopup).")
 
-    # def get_visible_calendar_title_text(self) -> str:
-    #     popup = self._get_visible_calendar_popup()
-
-    #     label = popup.locator("td#pawTheLabelTgt")
-    #     label.wait_for(state="visible", timeout=10_000)
-
-    #     return label.inner_text().strip()
-
+    # selecciona el dia
     def _calendar_select_day(self, popup, d: date):
+        day_id = f"pawDay_{d.year:04d}{d.month:02d}{d.day:02d}"
+        day = popup.locator(f"td#{day_id}")
+
+        if day.count() == 0:
+            raise RuntimeError(f"No se encontró el día en el popup: {day_id} (¿mes correcto?)")
         
-        day_id = 
+        day.wait_for(state="visible", timeout=10_000)
+        day.click()
+
+    # retorna el mes y año del calendario
+    def _calendar_get_label_text(self):
+        popup = self._get_visible_calendar_popup()
+
+        label = popup.locator("td#pawTheLabelTgt")
+        label.wait_for(state="visible", timeout=10_000)
+        return label.inner_text().strip()
+    
+    def _parse_month_year_es(self, text: str) -> tuple[int, int]:
+        t = (text or "").strip().lower()
+        parts = [p.strip() for p in t.split(" de ")]
+        if len(parts) != 2:
+            raise RuntimeError(f"No pude parsear mes/año desde: '{text}'")
+
+        month_name, year_str = parts
+        if month_name not in MONTHS_ES_INV:
+            raise RuntimeError(f"Mes no reconocido: '{month_name}' en '{text}'")
+
+        return int(year_str), MONTHS_ES_INV[month_name]
+    
+    def _calendar_goto_month_year(self, popup, target_year: int, target_month: int):
+        prev_btn = popup.locator("td[paw\\:cmd='prm']")
+        next_btn = popup.locator("td[paw\\:cmd='nxm']")
+
+        prev_btn.wait_for(state="visible", timeout=10_000)
+        next_btn.wait_for(state="visible", timeout=10_000)
+
+        target = (target_year, target_month)
+
+        # Rango en 2 Años para cargar ticket
+        for _ in range(24):
+            current_text = self._calendar_get_label_text()
+            cy, cm = self._parse_month_year_es(current_text)
+            current = (cy, cm)
+
+            if current == target:
+                return
+
+            # comparación tupla (año, mes)
+            if current < target:
+                next_btn.click()
+            else:
+                prev_btn.click()
+
+            self.page.wait_for_timeout(150)
+
+        raise RuntimeError(f"No pude llegar al mes objetivo {target_month}/{target_year}")
+    
+    def _calendar_select_time(self, excel_time):
+        pass
 
 
 

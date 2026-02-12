@@ -95,3 +95,38 @@ def smart_click(locator, frame=None, expect_nav: bool = False, nav_timeout_ms: i
 
     locator.click(timeout=10_000)
 
+def get_visible_popup(page, popup_selector, must_contain_selector: None):
+
+    for fr in page.frames:
+        popups = fr.locator(popup_selector)
+        try:
+            count = popups.count()
+        except Exception:
+            continue
+
+        for i in range(count):
+            p = popups.nth(i)
+            try:
+                if not p.is_visible():
+                    continue
+                if must_contain_selector and p.locator(must_contain_selector).count() == 0:
+                    continue
+                return p
+            except Exception:
+                continue
+
+    return None
+
+def wait_visible_popup(page, popup_selector, must_contain_selector: None, timeout_ms: 10_000, step_ms: 200):
+    waited = 0
+    while waited < timeout_ms:
+        p = get_visible_popup(page, popup_selector, must_contain_selector)
+        if p:
+            return p
+        page.wait_for_timeout(step_ms)
+        waited += step_ms
+
+    raise PWTimeoutError(
+        f"Timeout esperando popup visible: {popup_selector} "
+        f"(must_contain={must_contain_selector})"
+    )
