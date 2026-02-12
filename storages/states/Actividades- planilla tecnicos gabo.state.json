@@ -78,6 +78,12 @@
       "status": "FAILED",
       "ticket_id": null,
       "error": "No se encontró #newIncident."
+    },
+    {
+      "row_id": 13,
+      "status": "FAILED",
+      "ticket_id": null,
+      "error": "No se encontró #newIncident."
     }
   ]
 }
