@@ -117,7 +117,7 @@ def get_visible_popup(page, popup_selector, must_contain_selector: None):
 
     return None
 
-def wait_visible_popup(page, popup_selector, must_contain_selector: None, timeout_ms: 10_000, step_ms: 200):
+def wait_visible_popup(page, popup_selector, must_contain_selector: None, timeout_ms: 10_000, step_ms: int = 200):
     waited = 0
     while waited < timeout_ms:
         p = get_visible_popup(page, popup_selector, must_contain_selector)
@@ -130,3 +130,38 @@ def wait_visible_popup(page, popup_selector, must_contain_selector: None, timeou
         f"Timeout esperando popup visible: {popup_selector} "
         f"(must_contain={must_contain_selector})"
     )
+
+def get_label_popup_txt(page, popup_selector: str, label_selector: str, timeout_ms: int = 10_000):
+    popup = wait_visible_popup(page, popup_selector, must_contain_selector=label_selector, timeout_ms=timeout_ms)
+
+    label = popup.locator(label_selector)
+    label.wait_for(state="visible", timeout=timeout_ms)
+
+    txt = label.inner_text().strip()
+    return txt
+
+
+def get_label_txt(page, selector: str, timeout_ms: int = 10_000):
+    locator, frame = find_in_all_frames(page, selector)
+    if not locator:
+        raise RuntimeError(f"No se encontró el elemento: {selector}")
+
+    locator.wait_for(state="visible", timeout=timeout_ms)
+    txt = locator.inner_text().strip()
+    return txt
+
+def select_popup_option_by_text(popup, option_selector: str, target_text: str, timeout_ms: int = 10_000):
+    opts = popup.locator(option_selector)
+    opts.first.wait_for(state="visible", timeout=timeout_ms)
+
+    count = opts.count()
+    for i in range(count):
+        c = opts.nth(i)
+        try:
+            if c.is_visible() and c.inner_text().strip() == target_text:
+                c.click()
+                return True
+        except Exception:
+            continue
+
+    raise RuntimeError(f"No se encontró la opción '{target_text}' en el popup ({option_selector}).")
