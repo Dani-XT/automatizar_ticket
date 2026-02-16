@@ -11,19 +11,16 @@ from src.helpers.web_helpers import (
     wait_visible_popup,
     get_label_popup_txt,
     get_label_txt,
-    select_popup_option_by_text
+    select_popup_option_by_text,
+    parse_month_year_es,
+    select_popup_option_by_attr_contains
 )
 
 from src.models.ticket_job import TicketJob
 
 from src.utils.context_manager import timed
 
-
-MONTHS_ES = {
-    1: "enero", 2: "febrero", 3: "marzo", 4: "abril", 5: "mayo", 6: "junio",
-    7: "julio", 8: "agosto", 9: "septiembre", 10: "octubre", 11: "noviembre", 12: "diciembre",
-}
-MONTHS_ES_INV = {v: k for k, v in MONTHS_ES.items()}
+from src.config import DEFAULT_REPORT_USER
 
 class WebController:
     def __init__(self):
@@ -138,7 +135,6 @@ class WebController:
 
         raise PWTimeoutError("Timeout esperando #newIncident")
 
-
     # =========================
     # ACCIONES
     # =========================
@@ -204,7 +200,13 @@ class WebController:
         return popup
 
     def _open_creation_minutes_popup(self):
-        pass
+        locator, frame = find_in_all_frames(self.page, "#creationDate button[paw\\:handler='pawDataFieldDate_btnShowPopMinutes']")
+        if not locator:
+            raise RuntimeError("No se encontro BOTON de mINUTOS")
+        
+        smart_click(locator, frame=frame, expect_nav=False)
+        popup = wait_visible_popup(self.page, "span.pawDFSelPopup", must_contain_selector="td.pawOptTdr", timeout_ms=10_000)
+        return popup
 
     # orquesta la seleccion del mes y del dia
     def _calendar_goto_month_year(self, popup, target_year: int, target_month: int):
@@ -219,7 +221,7 @@ class WebController:
         # Rango en 2 Años para cargar ticket
         for _ in range(24):
             current_text = get_label_popup_txt(self.page, popup_selector="span.pawCalPopup", label_selector="td#pawTheLabelTgt", timeout_ms=10_000)
-            cy, cm = self._parse_month_year_es(current_text)
+            cy, cm = parse_month_year_es(current_text)
             current = (cy, cm)
 
             if current == target:
@@ -246,19 +248,7 @@ class WebController:
         day.wait_for(state="visible", timeout=10_000)
         day.click()
 
-    # TODO: pasar al helpers
-    def _parse_month_year_es(self, text: str) -> tuple[int, int]:
-        t = (text or "").strip().lower()
-        parts = [p.strip() for p in t.split(" de ")]
-        if len(parts) != 2:
-            raise RuntimeError(f"No pude parsear mes/año desde: '{text}'")
-
-        month_name, year_str = parts
-        if month_name not in MONTHS_ES_INV:
-            raise RuntimeError(f"Mes no reconocido: '{month_name}' en '{text}'")
-
-        return int(year_str), MONTHS_ES_INV[month_name]
-    
+    # orquesta las horas y minutos
     def _calendar_goto_hours_minute(self, excel_time):
         if not excel_time:
             raise RuntimeError("Excel time no se encuentra")
@@ -267,18 +257,154 @@ class WebController:
         minute = excel_time.minute
         
         popup = self._open_creation_hours_popup()
-
-
         select_popup_option_by_text(popup, "td.pawOptTdr", str(hour), timeout_ms=10_000)
 
+        popup = self._open_creation_minutes_popup()
+        try:
+            select_popup_option_by_text(popup, "td.pawOptTdr", str(minute), timeout_ms=10_000)
+        except Exception:
+            select_popup_option_by_text(popup, "td.pawOptTdr", f"{minute:02d}", timeout_ms=10_000)
+    
+    # selecciona la persona que notifico el problema
+    def goto_notificado_por(self):
+        popup = self._open_notificado_por_popup()
+        self._select_notificado_por(popup)
 
-    def _creation_select_hours(self, hour):
-        print(hour)
+    # abre el popup de notificado por
+    def _open_notificado_por_popup(self):
+        locator, frame = find_in_all_frames(self.page, 'table[paw\\:name="panUsers_idSource"][paw\\:label="Notificado por"]')
+        if not locator:
+            raise RuntimeError("No se encontro campo 'Notificado por'")
+        
+        smart_click(locator, frame=frame, expect_nav=False)
+        popup = wait_visible_popup(self.page, 'span[paw\\:ctrl="pawDataFieldSelector"]#panUsers_idSource', must_contain_selector="input.pawDFSelFilterTableInp", timeout_ms=10_000)
+        return popup
+
+    # abre y selecciona el notificado por
+    def _select_notificado_por(self, popup):
+        inp = popup.locator("input.pawDFSelFilterTableInp")
+        inp.wait_for(state="visible", timeout=10_000)
+        inp.fill("")
+        inp.type(DEFAULT_REPORT_USER, delay=30)
+
+        needle = f"\\{DEFAULT_REPORT_USER}"
+        try:
+            inp.press("Enter")
+        except Exception:
+            pass
+
+
+        with timed("select notificado_por (chiguera)"):
+            select_popup_option_by_attr_contains(
+                popup=popup,
+                attr="completeview",
+                needle=needle,
+                timeout_ms=10_000,
+            )
+
+    # ingresa el titulo y descripcion de incidencia
+    def select_titulo_descripcion(self, job: TicketJob):
+        
+        problema = job.data.get("PROBLEMA").strip()
+        titulo = problema[:256]
+
+        # Titulo
+        if not problema:
+            raise RuntimeError("Problema Vacio en el JOB")
+
+        locator, _ = find_in_all_frames(self.page, "#incidentTitle")
+        if not locator:
+            raise RuntimeError("No se encontro frame titulo de incidencia")
+        locator.wait_for(state="visible", timeout=10_000)
+        locator.fill("")
+        locator.type(titulo, delay=10)
+        
+        # Descripcion
+        locator, _ = find_in_all_frames(self.page, "#description")
+        if not locator:
+            raise RuntimeError("No se encontró #description (Descripción)")
+
+        locator.wait_for(state="visible", timeout=10_000)
+        locator.click(timeout=5_000)
+        locator.fill(problema)
+
+    # selecciona el tipo de solicitud
+    def select_tipo_solicitud_servicio(self):
+        btn, frame = find_in_all_frames(self.page, "#padTypes_id button#pawTheBtn")
+        if not btn:
+            raise RuntimeError("No se encontró el botón del dropdown Tipo (#padTypes_id #pawTheBtn)")
+
+        smart_click(btn, frame=frame, expect_nav=False)
+        popup = wait_visible_popup(self.page, "span.pawDFSelPopup#viewAllIncidents_padTypes_id_Selector", must_contain_selector="div.pawOpt", timeout_ms=10_000)
+        select_popup_option_by_text(popup, option_selector="div.pawOpt", target_text="Solicitud de Servicio", timeout_ms=10_000)
+
+    def select_servicio_por_ruta(self, path: list[str]):
+        # 1) abrir popup del árbol (ojo: hay 3 botones con id repetido, apunta por handler o por img src)
+        tree_btn, frame = find_in_all_frames(
+            self.page,
+            "#padPortfolio_id button[paw\\:handler='pawDataFieldDropDownBrowser_btnShowPopTree']"
+        )
+        if not tree_btn:
+            # fallback: botón cuyo img termina en tree.png
+            tree_btn, frame = find_in_all_frames(
+                self.page,
+                "#padPortfolio_id button:has(img[src$='tree.png'])"
+            )
+        if not tree_btn:
+            raise RuntimeError("No se encontró botón para abrir árbol de Servicio (padPortfolio_id)")
+
+        smart_click(tree_btn, frame=frame, expect_nav=False)
+
+        # 2) localizar el árbol visible (display != none)
+        tree = self.page.locator("div.pawTree.pawTreePopup#padPortfolio_id").filter(has_text="Servicio")
+        tree.wait_for(state="visible", timeout=10_000)
+
+        # helpers internos
+        def node_locator_by_label(label: str):
+            # busca el nodo cuyo header contenga exactamente ese texto en su label
+            # (usa normalize-space para tolerar espacios raros)
+            return tree.locator(
+                ".pawTreeNodeHeader:has(.pawTreeNodeLabel >> text=%s)" % label
+            ).first
+
+        def expand_if_needed(label: str):
+            header = node_locator_by_label(label)
+            header.wait_for(state="visible", timeout=10_000)
+
+            # el contenido del nodo es el hermano .pawTreeNodeContent del contenedor .pawTreeNode
+            node = header.locator("xpath=ancestor::div[contains(@class,'pawTreeNode')][1]")
+            content = node.locator(":scope > .pawTreeNodeContent").first
+
+            # si ya está visible, listo
+            if content.is_visible():
+                return
+
+            # click en el icono de expand (img#pawExp) si existe, si no, click header
+            exp = header.locator("img#pawExp").first
+            if exp.count():
+                exp.click()
+            else:
+                header.click()
+
+            # esperar que abra
+            content.wait_for(state="visible", timeout=10_000)
+
+        def click_leaf(label: str):
+            header = node_locator_by_label(label)
+            header.wait_for(state="visible", timeout=10_000)
+            # click en el texto (label) suele ser más confiable que en el icono
+            header.locator(".pawTreeNodeLabel").first.click()
+
+        # 3) recorrer ruta: expandir intermedios y click en el último
+        #    (todos menos el último se expanden)
+        for i, label in enumerate(path):
+            is_last = (i == len(path) - 1)
+            if is_last:
+                click_leaf(label)
+            else:
+                expand_if_needed(label)
 
 
 
-
-
-
-
-   
+    def _go_home(self):
+        self.page.goto(URL_PROACTIVA, wait_until="domcontentloaded", timeout=60_000)

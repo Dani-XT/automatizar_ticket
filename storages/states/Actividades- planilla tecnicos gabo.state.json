@@ -3,87 +3,51 @@
   "jobs": [
     {
       "row_id": 0,
-      "status": "CREATED",
-      "ticket_id": "REQ-2026-XXXX",
-      "error": null
+      "status": "FAILED",
+      "ticket_id": null,
+      "error": "Locator.wait_for: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator(\"div.pawTree.pawTreePopup#padPortfolio_id\").filter(has_text=\"Servicio\") to be visible\n"
     },
     {
       "row_id": 1,
       "status": "FAILED",
       "ticket_id": null,
-      "error": "No se encontró #newIncident."
+      "error": "Locator.wait_for: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator(\"div.pawTree.pawTreePopup#padPortfolio_id\").filter(has_text=\"Servicio\") to be visible\n"
     },
     {
       "row_id": 2,
       "status": "FAILED",
       "ticket_id": null,
-      "error": "No se encontró #newIncident."
+      "error": "Locator.wait_for: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator(\"div.pawTree.pawTreePopup#padPortfolio_id\").filter(has_text=\"Servicio\") to be visible\n"
     },
     {
       "row_id": 3,
       "status": "FAILED",
       "ticket_id": null,
-      "error": "No se encontró #newIncident."
+      "error": "Locator.wait_for: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator(\"div.pawTree.pawTreePopup#padPortfolio_id\").filter(has_text=\"Servicio\") to be visible\n"
     },
     {
       "row_id": 4,
       "status": "FAILED",
       "ticket_id": null,
-      "error": "No se encontró #newIncident."
+      "error": "Locator.wait_for: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator(\"div.pawTree.pawTreePopup#padPortfolio_id\").filter(has_text=\"Servicio\") to be visible\n"
     },
     {
       "row_id": 5,
       "status": "FAILED",
       "ticket_id": null,
-      "error": "No se encontró #newIncident."
+      "error": "Locator.wait_for: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator(\"div.pawTree.pawTreePopup#padPortfolio_id\").filter(has_text=\"Servicio\") to be visible\n"
     },
     {
       "row_id": 6,
       "status": "FAILED",
       "ticket_id": null,
-      "error": "No se encontró #newIncident."
+      "error": "Locator.wait_for: Timeout 10000ms exceeded.\nCall log:\n  - waiting for locator(\"div.pawTree.pawTreePopup#padPortfolio_id\").filter(has_text=\"Servicio\") to be visible\n"
     },
     {
       "row_id": 7,
-      "status": "FAILED",
+      "status": "IN_PROGRESS",
       "ticket_id": null,
-      "error": "No se encontró #newIncident."
-    },
-    {
-      "row_id": 8,
-      "status": "FAILED",
-      "ticket_id": null,
-      "error": "No se encontró #newIncident."
-    },
-    {
-      "row_id": 9,
-      "status": "FAILED",
-      "ticket_id": null,
-      "error": "No se encontró #newIncident."
-    },
-    {
-      "row_id": 10,
-      "status": "FAILED",
-      "ticket_id": null,
-      "error": "No se encontró #newIncident."
-    },
-    {
-      "row_id": 11,
-      "status": "FAILED",
-      "ticket_id": null,
-      "error": "No se encontró #newIncident."
-    },
-    {
-      "row_id": 12,
-      "status": "FAILED",
-      "ticket_id": null,
-      "error": "No se encontró #newIncident."
-    },
-    {
-      "row_id": 13,
-      "status": "FAILED",
-      "ticket_id": null,
-      "error": "No se encontró #newIncident."
+      "error": null
     }
   ]
 }

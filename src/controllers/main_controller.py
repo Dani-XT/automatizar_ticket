@@ -52,18 +52,31 @@ class MainController:
             if not job.data.get("FECHA"):
                 job.creation_dt_text = creation_dt_text
 
+            self.web_ctrl.goto_notificado_por()
+            self.web_ctrl.select_titulo_descripcion(job)
+            self.web_ctrl.select_tipo_solicitud_servicio()
+
+
             # creation_dt_text = self.web_ctrl.ensure_creation_datetime(job)
             # print(creation_dt_text)
             # job.creation_dt_text = creation_dt_text
 
             # TODO: completar formulario con PROBLEMA, SOLUCION, TECNICO, etc.
             # ticket_id_real = self.web_ctrl.submit_incident(...)
+            self.web_ctrl.select_servicio_por_ruta([
+                "Servicios TI",
+                "Computadores e Impresoras",
+                "Computadores",
+            ])
+
+            self.web_ctrl._go_home()
 
             return {
                 "success": True,
                 "ticket_id": "REQ-2026-XXXX"
             }
         except Exception as e:
+            self.web_ctrl._go_home()
             return {
                 "success": False,
                 "error": str(e)

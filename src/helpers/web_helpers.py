@@ -2,6 +2,8 @@ import winreg
 from pathlib import Path
 from playwright.sync_api import TimeoutError as PWTimeoutError
 
+from src.config import MONTHS_ES_INV
+
 def get_default_browser() -> str | None:
     try:
         key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice")
@@ -165,3 +167,115 @@ def select_popup_option_by_text(popup, option_selector: str, target_text: str, t
             continue
 
     raise RuntimeError(f"No se encontró la opción '{target_text}' en el popup ({option_selector}).")
+
+def parse_month_year_es(text: str) -> tuple[int, int]:
+    t = (text or "").strip().lower()
+    parts = [p.strip() for p in t.split(" de ")]
+    if len(parts) != 2:
+        raise RuntimeError(f"No pude parsear mes/año desde: '{text}'")
+
+    month_name, year_str = parts
+    if month_name not in MONTHS_ES_INV:
+        raise RuntimeError(f"Mes no reconocido: '{month_name}' en '{text}'")
+
+    return int(year_str), MONTHS_ES_INV[month_name]
+
+
+# def select_popup_option_by_attr_contains(
+#     page,
+#     popup,
+#     option_selector: str,
+#     attr: str,
+#     needle: str,
+#     timeout_ms: int = 10_000,
+#     step_ms: int = 200,
+#     case_insensitive: bool = True,
+# ):
+#     """
+#     Espera hasta timeout_ms a que aparezca una opción (option_selector) cuyo atributo `attr`
+#     contenga `needle`, y la clickea.
+
+#     - `page` se usa solo para wait_for_timeout (consistente con tus helpers).
+#     - Ignora la opción vacía típica (pawIdNull / contenido &nbsp;).
+#     """
+#     wanted = (needle or "").strip()
+#     if case_insensitive:
+#         wanted = wanted.lower()
+
+#     waited = 0
+#     last_seen = []
+
+#     while waited < timeout_ms:
+#         opts = popup.locator(option_selector)
+
+#         try:
+#             cnt = opts.count()
+#         except Exception:
+#             cnt = 0
+
+#         if cnt > 0:
+#             for i in range(cnt):
+#                 c = opts.nth(i)
+#                 try:
+#                     if not c.is_visible():
+#                         continue
+
+#                     v = (c.get_attribute(attr) or "").strip()
+#                     if not v:
+#                         continue
+
+#                     vv = v.lower() if case_insensitive else v
+
+#                     # guarda "algo" por si hay que debuggear el error
+#                     if len(last_seen) < 5:
+#                         last_seen.append(v)
+
+#                     # match
+#                     if wanted in vv:
+#                         c.click()
+#                         return True
+#                 except Exception:
+#                     continue
+
+#         page.wait_for_timeout(step_ms)
+#         waited += step_ms
+
+#     extra = f" Últimos valores vistos: {last_seen!r}" if last_seen else ""
+#     raise RuntimeError(
+#         f"No se encontró opción con {attr} que contenga '{needle}' en ({option_selector}).{extra}"
+#     )
+
+def select_popup_option_by_attr_contains(
+    popup,
+    attr: str,
+    needle: str,
+    timeout_ms: int = 10_000,
+    case_insensitive: bool = True,
+):
+    """
+    Espera a que exista una opción div.pawOpt (distinta a pawIdNull)
+    cuyo atributo `attr` contenga `needle`, y clickea.
+    Sin loops, sin count(), sin is_visible() por cada item.
+    """
+
+    wanted = (needle or "").strip()
+    if not wanted:
+        raise RuntimeError("needle vacío")
+
+    if case_insensitive:
+        # XPath translate para comparar en lowercase
+        xp = (
+            "xpath=.//div[contains(@class,'pawOpt') and not(@id='pawIdNull') and "
+            f"contains(translate(@{attr}, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), "
+            f"'{wanted.lower()}')]"
+        )
+    else:
+        xp = (
+            "xpath=.//div[contains(@class,'pawOpt') and not(@id='pawIdNull') and "
+            f"contains(@{attr}, '{wanted}')]"
+        )
+
+    opt = popup.locator(xp).first
+    opt.wait_for(state="visible", timeout=timeout_ms)
+    opt.click(timeout=timeout_ms)
+    return True
