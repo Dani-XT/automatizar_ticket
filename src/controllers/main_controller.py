@@ -56,10 +56,12 @@ class MainController:
             self.web_ctrl.select_titulo_descripcion(job)
             self.web_ctrl.select_tipo_solicitud_servicio()
             self.web_ctrl.select_categoria()
+            self.web_ctrl.select_servicio()
+            self.web_ctrl.goto_grupo_responsable()
+            self.web_ctrl.crear_ticket()
 
+            
 
-            # creation_dt_text = self.web_ctrl.ensure_creation_datetime(job)
-            # print(creation_dt_text)
             # job.creation_dt_text = creation_dt_text
 
             # TODO: completar formulario con PROBLEMA, SOLUCION, TECNICO, etc.

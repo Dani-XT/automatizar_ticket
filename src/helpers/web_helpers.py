@@ -119,7 +119,7 @@ def get_visible_popup(page, popup_selector, must_contain_selector: None):
 
     return None
 
-def wait_visible_popup(page, popup_selector, must_contain_selector: None, timeout_ms: 10_000, step_ms: int = 200):
+def wait_visible_popup(page, popup_selector, must_contain_selector: None, timeout_ms: int = 10_000, step_ms: int = 200):
     waited = 0
     while waited < timeout_ms:
         p = get_visible_popup(page, popup_selector, must_contain_selector)
@@ -180,102 +180,80 @@ def parse_month_year_es(text: str) -> tuple[int, int]:
 
     return int(year_str), MONTHS_ES_INV[month_name]
 
-
-# def select_popup_option_by_attr_contains(
-#     page,
-#     popup,
-#     option_selector: str,
-#     attr: str,
-#     needle: str,
-#     timeout_ms: int = 10_000,
-#     step_ms: int = 200,
-#     case_insensitive: bool = True,
-# ):
-#     """
-#     Espera hasta timeout_ms a que aparezca una opción (option_selector) cuyo atributo `attr`
-#     contenga `needle`, y la clickea.
-
-#     - `page` se usa solo para wait_for_timeout (consistente con tus helpers).
-#     - Ignora la opción vacía típica (pawIdNull / contenido &nbsp;).
-#     """
-#     wanted = (needle or "").strip()
-#     if case_insensitive:
-#         wanted = wanted.lower()
-
-#     waited = 0
-#     last_seen = []
-
-#     while waited < timeout_ms:
-#         opts = popup.locator(option_selector)
-
-#         try:
-#             cnt = opts.count()
-#         except Exception:
-#             cnt = 0
-
-#         if cnt > 0:
-#             for i in range(cnt):
-#                 c = opts.nth(i)
-#                 try:
-#                     if not c.is_visible():
-#                         continue
-
-#                     v = (c.get_attribute(attr) or "").strip()
-#                     if not v:
-#                         continue
-
-#                     vv = v.lower() if case_insensitive else v
-
-#                     # guarda "algo" por si hay que debuggear el error
-#                     if len(last_seen) < 5:
-#                         last_seen.append(v)
-
-#                     # match
-#                     if wanted in vv:
-#                         c.click()
-#                         return True
-#                 except Exception:
-#                     continue
-
-#         page.wait_for_timeout(step_ms)
-#         waited += step_ms
-
-#     extra = f" Últimos valores vistos: {last_seen!r}" if last_seen else ""
-#     raise RuntimeError(
-#         f"No se encontró opción con {attr} que contenga '{needle}' en ({option_selector}).{extra}"
-#     )
-
-def select_popup_option_by_attr_contains(
-    popup,
-    attr: str,
-    needle: str,
-    timeout_ms: int = 10_000,
-    case_insensitive: bool = True,
-):
-    """
-    Espera a que exista una opción div.pawOpt (distinta a pawIdNull)
-    cuyo atributo `attr` contenga `needle`, y clickea.
-    Sin loops, sin count(), sin is_visible() por cada item.
-    """
-
+def select_popup_option_by_attr_contains(popup, attr: str, needle: str, timeout_ms: int = 10_000, case_insensitive: bool = True):
     wanted = (needle or "").strip()
     if not wanted:
         raise RuntimeError("needle vacío")
 
+    # 👇 si el atributo tiene ":", usar name()='paw:label'
+    if ":" in attr:
+        attr_expr = f"@*[name()='{attr}']"
+    else:
+        attr_expr = f"@{attr}"
+
     if case_insensitive:
-        # XPath translate para comparar en lowercase
         xp = (
             "xpath=.//div[contains(@class,'pawOpt') and not(@id='pawIdNull') and "
-            f"contains(translate(@{attr}, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), "
+            f"contains(translate({attr_expr}, "
+            "'ABCDEFGHIJKLMNOPQRSTUVWXYZÁÉÍÓÚÜÑ', "
+            "'abcdefghijklmnopqrstuvwxyzáéíóúüñ'), "
             f"'{wanted.lower()}')]"
         )
     else:
         xp = (
             "xpath=.//div[contains(@class,'pawOpt') and not(@id='pawIdNull') and "
-            f"contains(@{attr}, '{wanted}')]"
+            f"contains({attr_expr}, '{wanted}')]"
         )
 
     opt = popup.locator(xp).first
     opt.wait_for(state="visible", timeout=timeout_ms)
     opt.click(timeout=timeout_ms)
     return True
+
+
+
+# Popup con label
+def get_tree_popup(frame, root_label: str, timeout=20_000):
+    popup = frame.locator('css=div[paw\\:ctrl="pawTree"].pawTreePopup:visible').first
+    popup.wait_for(state="visible", timeout=timeout)
+
+    popup.locator('css=span.pawTreeNodeLabel', has_text=root_label).first.wait_for(
+        state="visible", timeout=timeout
+    )
+    return popup
+
+def tree_header_by_label(popup, label: str):
+    return popup.locator('xpath=.//div[contains(@class,"pawTreeNodeHeader")]'f'[.//span[contains(@class,"pawTreeNodeLabel")][normalize-space(.)="{label}"]]').first
+
+def tree_expand(page, popup, label: str, timeout=20_000):
+    header = tree_header_by_label(popup, label)
+    header.wait_for(state="visible", timeout=timeout)
+    header.scroll_into_view_if_needed()
+
+    exp = header.locator("css=img#pawExp").first
+    if exp.count() > 0:
+        exp.wait_for(state="visible", timeout=timeout)
+        exp.click()
+    else:
+        header.click()
+
+    page.wait_for_timeout(200)
+
+def tree_click_leaf(page, popup, label: str, timeout=20_000):
+    header = tree_header_by_label(popup, label)
+    header.wait_for(state="visible", timeout=timeout)
+    header.scroll_into_view_if_needed()
+    header.click()
+    page.wait_for_timeout(200)
+
+def tree_wait_label_visible(popup, label: str, timeout=20_000):
+    popup.locator("css=span.pawTreeNodeLabel", has_text=label).first.wait_for(state="visible", timeout=timeout)
+
+def click_radio_btn(page, row_id: str, timeout=10_000):
+    loc, fr = find_in_all_frames(page, f"tr#{row_id}")
+    if not loc:
+        raise RuntimeError(f"No se encontró el img-cycler tr#{row_id}")
+    loc.wait_for(state="visible", timeout=timeout)
+    smart_click(loc, frame=fr, expect_nav=False)
+    page.wait_for_timeout(200)
+    return fr

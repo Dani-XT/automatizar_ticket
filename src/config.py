@@ -19,6 +19,7 @@ APP_SIZE = "637x369"
 APP_TITLE = "Carga automatica de Ticket"
 
 DEFAULT_REPORT_USER = "chiguera"
+DEFAULT_JOB_GROUP = "Soporte Terreno República"
 
 REQUIRED_COLUMNS = [
     "FECHA",

@@ -13,14 +13,20 @@ from src.helpers.web_helpers import (
     get_label_txt,
     select_popup_option_by_text,
     parse_month_year_es,
-    select_popup_option_by_attr_contains
+    select_popup_option_by_attr_contains,
+    get_tree_popup,
+    tree_wait_label_visible,
+    tree_expand,
+    tree_click_leaf,
+    click_radio_btn
 )
 
 from src.models.ticket_job import TicketJob
 
 from src.utils.context_manager import timed
 
-from src.config import DEFAULT_REPORT_USER
+from src.config import DEFAULT_REPORT_USER, DEFAULT_JOB_GROUP
+
 
 class WebController:
     def __init__(self):
@@ -285,7 +291,7 @@ class WebController:
         inp = popup.locator("input.pawDFSelFilterTableInp")
         inp.wait_for(state="visible", timeout=10_000)
         inp.fill("")
-        inp.type(DEFAULT_REPORT_USER, delay=30)
+        inp.type(DEFAULT_REPORT_USER, delay=0)
 
         needle = f"\\{DEFAULT_REPORT_USER}"
         try:
@@ -293,14 +299,7 @@ class WebController:
         except Exception:
             pass
 
-
-        with timed("select notificado_por (chiguera)"):
-            select_popup_option_by_attr_contains(
-                popup=popup,
-                attr="completeview",
-                needle=needle,
-                timeout_ms=10_000,
-            )
+        select_popup_option_by_attr_contains(popup=popup,attr="completeview",needle=needle,timeout_ms=10_000)
 
     # ingresa el titulo y descripcion de incidencia
     def select_titulo_descripcion(self, job: TicketJob):
@@ -317,7 +316,7 @@ class WebController:
             raise RuntimeError("No se encontro frame titulo de incidencia")
         locator.wait_for(state="visible", timeout=10_000)
         locator.fill("")
-        locator.type(titulo, delay=10)
+        locator.type(titulo, delay=0)
         
         # Descripcion
         locator, _ = find_in_all_frames(self.page, "#description")
@@ -338,30 +337,102 @@ class WebController:
         popup = wait_visible_popup(self.page, "span.pawDFSelPopup#viewAllIncidents_padTypes_id_Selector", must_contain_selector="div.pawOpt", timeout_ms=10_000)
         select_popup_option_by_text(popup, option_selector="div.pawOpt", target_text="Solicitud de Servicio", timeout_ms=10_000)
 
-
-    # selecciona la categoria del servicio
+    # selecciona la categoria de la solicitud
     def select_categoria(self):
-        btn, btn_frame = find_in_all_frames(self.page, "table#padPortfolio_id button[paw\\:handler='pawDataFieldDropDownBrowser_btnShowPopTree']")
+        btn, btn_frame = find_in_all_frames(self.page,'table#padPortfolio_id button[paw\\:handler="pawDataFieldDropDownBrowser_btnShowPopTree"]')
         if not btn:
             raise RuntimeError("No se encontró el botón de servicio categoría (tree)")
 
         smart_click(btn, frame=btn_frame, expect_nav=False)
 
-        popup, popup_frame = find_in_all_frames(self.page, "div.pawTree.pawTreePopup:visible")
-        if not popup:
-            raise TimeoutError("No apareció el popup del árbol (pawTreePopup)")
+        popup = get_tree_popup(btn_frame, root_label="Servicio", timeout=20_000)
 
-        popup.wait_for(state="visible", timeout=15_000)
+        # 3) Ruta: expandir → expandir → click leaf
+        tree_expand(self.page, popup, "Servicios TI")
+        tree_wait_label_visible(popup, "Computadores e Impresoras")
 
-        # 3) click en 'Servicios TI' dentro del popup
-        self._click_tree_node(popup, "Servicios TI")
+        tree_expand(self.page, popup, "Computadores e Impresoras")
+        tree_wait_label_visible(popup, "Computadores")
+
+        tree_click_leaf(self.page, popup, "Computadores")
+
+    # selecciona el servicio a realizar
+    def select_servicio(self):
+        btn, btn_frame = find_in_all_frames(self.page, 'table#padCategories_id button[paw\\:handler="pawDataFieldDropDownBrowser_btnShowPopTree"]')
+        if not btn:
+            raise RuntimeError("No se encontro el boton de Categorias")
         
+        smart_click(btn, frame=btn_frame, expect_nav=False)
 
-    def _click_tree_node(self, popup, text, timeout=10_000):
-        node_label = popup.locator(".pawTreeNodeHeader .pawTreeNodeLabel",).filter(has_text=text).first
-        node_label.wait_for(state="visible", timeout=timeout)
-        # node_label.click()
-        print(node_label)
+        popup = get_tree_popup(btn_frame, root_label="Categorías", timeout=20_000)
+
+        tree_click_leaf(self.page, popup, "Mantención de Equipos")
+
+    # selecciona grupo responsable y usuario
+    def goto_grupo_responsable(self):
+        click_radio_btn(self.page, "dfrb_FirstLineActionScale", timeout=10_000)
+        self.page.wait_for_timeout(400)
+
+        tecnico = get_label_txt(self.page, selector="span#pawTheUserInfoLabel", timeout_ms=10_000)
+        print(tecnico)
+        popup = self._open_grupo_responsable_popup()
+        self._select_grupo_responsable(popup)
+
+        popup = self._open_tecnico_encargado()
+        self._select_tecnico_encargado(popup, tecnico)
+
+    def _open_grupo_responsable_popup(self):
+        btn, btn_frame = find_in_all_frames(self.page,'table#pawSvcAuthGroups_id button[paw\\:handler="pawDataFieldDropDownBrowser_btnShowPopSel"]')
+        if not btn:
+            raise RuntimeError("No se encontró el botón dropdown (PopSel) para Grupo responsable")
+
+        smart_click(btn, frame=btn_frame, expect_nav=False)
+
+        popup = wait_visible_popup(self.page, 'span[paw\\:ctrl="pawDataFieldSelector"]#pawSvcAuthGroups_id', must_contain_selector="input.pawDFSelFilterTableInp", timeout_ms=10_000)
+        return popup
+    
+    def _open_tecnico_encargado(self):
+        btn, btn_frame = find_in_all_frames(self.page, 'table#pawSvcAuthUsers_idResponsible button[paw\\:handler="pawDataFieldDropDownBrowser_btnShowPopSel"]')
+        if not btn:
+            raise RuntimeError("No se encontró botón PopSel para Técnico de 2ª línea")
+
+        smart_click(btn, frame=btn_frame, expect_nav=False)
+        popup = wait_visible_popup(self.page, 'span[paw\\:ctrl="pawDataFieldSelector"]#pawSvcAuthUsers_idResponsible', must_contain_selector="input.pawDFSelFilterTableInp", timeout_ms=10_000)
+        
+        return popup
+
+    def _select_grupo_responsable(self, popup):
+        inp = popup.locator("input.pawDFSelFilterTableInp")
+        inp.wait_for(state="visible", timeout=10_000)
+        inp.fill("")
+        inp.type(DEFAULT_JOB_GROUP, delay=0)
+
+        try:
+            inp.press("Enter")
+        except Exception:
+            pass
+
+        select_popup_option_by_attr_contains(popup=popup, attr="paw:label", needle=DEFAULT_JOB_GROUP, timeout_ms=20_000, case_insensitive=True)
+        
+    def _select_tecnico_encargado(self, popup, tecnico):
+        inp = popup.locator("input.pawDFSelFilterTableInp")
+        inp.wait_for(state="visible", timeout=10_000)
+        inp.fill("")
+        inp.type(tecnico, delay=0)
+
+        try:
+            inp.press("Enter")
+        except Exception:
+            pass
+
+        select_popup_option_by_attr_contains(popup=popup, attr="paw:label", needle=tecnico, timeout_ms=20_000, case_insensitive=True)
+
+    def crear_ticket(self):
+        pass
+
+    def cerrar_ticket(self):
+        pass
+
 
     def _go_home(self):
         pass

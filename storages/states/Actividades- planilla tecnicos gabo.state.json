@@ -3,15 +3,15 @@
   "jobs": [
     {
       "row_id": 0,
-      "status": "CREATED",
-      "ticket_id": "REQ-2026-XXXX",
+      "status": "IN_PROGRESS",
+      "ticket_id": null,
       "error": null
     },
     {
       "row_id": 1,
-      "status": "FAILED",
-      "ticket_id": null,
-      "error": "No se encontró #newIncident."
+      "status": "CREATED",
+      "ticket_id": "REQ-2026-XXXX",
+      "error": null
     },
     {
       "row_id": 2,
@@ -75,12 +75,6 @@
     },
     {
       "row_id": 12,
-      "status": "FAILED",
-      "ticket_id": null,
-      "error": "No se encontró #newIncident."
-    },
-    {
-      "row_id": 13,
       "status": "FAILED",
       "ticket_id": null,
       "error": "No se encontró #newIncident."

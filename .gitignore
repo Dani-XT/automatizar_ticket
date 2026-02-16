@@ -20,7 +20,7 @@ node_modules/
 
 *.env
 
-./storages/
+storages/
 
 # Distribution / packaging
 .Python
