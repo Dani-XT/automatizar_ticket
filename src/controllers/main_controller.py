@@ -55,6 +55,7 @@ class MainController:
             self.web_ctrl.goto_notificado_por()
             self.web_ctrl.select_titulo_descripcion(job)
             self.web_ctrl.select_tipo_solicitud_servicio()
+            self.web_ctrl.select_categoria()
 
 
             # creation_dt_text = self.web_ctrl.ensure_creation_datetime(job)
@@ -63,11 +64,6 @@ class MainController:
 
             # TODO: completar formulario con PROBLEMA, SOLUCION, TECNICO, etc.
             # ticket_id_real = self.web_ctrl.submit_incident(...)
-            self.web_ctrl.select_servicio_por_ruta([
-                "Servicios TI",
-                "Computadores e Impresoras",
-                "Computadores",
-            ])
 
             self.web_ctrl._go_home()
 

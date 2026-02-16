@@ -338,73 +338,31 @@ class WebController:
         popup = wait_visible_popup(self.page, "span.pawDFSelPopup#viewAllIncidents_padTypes_id_Selector", must_contain_selector="div.pawOpt", timeout_ms=10_000)
         select_popup_option_by_text(popup, option_selector="div.pawOpt", target_text="Solicitud de Servicio", timeout_ms=10_000)
 
-    def select_servicio_por_ruta(self, path: list[str]):
-        # 1) abrir popup del árbol (ojo: hay 3 botones con id repetido, apunta por handler o por img src)
-        tree_btn, frame = find_in_all_frames(
-            self.page,
-            "#padPortfolio_id button[paw\\:handler='pawDataFieldDropDownBrowser_btnShowPopTree']"
-        )
-        if not tree_btn:
-            # fallback: botón cuyo img termina en tree.png
-            tree_btn, frame = find_in_all_frames(
-                self.page,
-                "#padPortfolio_id button:has(img[src$='tree.png'])"
-            )
-        if not tree_btn:
-            raise RuntimeError("No se encontró botón para abrir árbol de Servicio (padPortfolio_id)")
 
-        smart_click(tree_btn, frame=frame, expect_nav=False)
+    # selecciona la categoria del servicio
+    def select_categoria(self):
+        btn, btn_frame = find_in_all_frames(self.page, "table#padPortfolio_id button[paw\\:handler='pawDataFieldDropDownBrowser_btnShowPopTree']")
+        if not btn:
+            raise RuntimeError("No se encontró el botón de servicio categoría (tree)")
 
-        # 2) localizar el árbol visible (display != none)
-        tree = self.page.locator("div.pawTree.pawTreePopup#padPortfolio_id").filter(has_text="Servicio")
-        tree.wait_for(state="visible", timeout=10_000)
+        smart_click(btn, frame=btn_frame, expect_nav=False)
 
-        # helpers internos
-        def node_locator_by_label(label: str):
-            # busca el nodo cuyo header contenga exactamente ese texto en su label
-            # (usa normalize-space para tolerar espacios raros)
-            return tree.locator(
-                ".pawTreeNodeHeader:has(.pawTreeNodeLabel >> text=%s)" % label
-            ).first
+        popup, popup_frame = find_in_all_frames(self.page, "div.pawTree.pawTreePopup:visible")
+        if not popup:
+            raise TimeoutError("No apareció el popup del árbol (pawTreePopup)")
 
-        def expand_if_needed(label: str):
-            header = node_locator_by_label(label)
-            header.wait_for(state="visible", timeout=10_000)
+        popup.wait_for(state="visible", timeout=15_000)
 
-            # el contenido del nodo es el hermano .pawTreeNodeContent del contenedor .pawTreeNode
-            node = header.locator("xpath=ancestor::div[contains(@class,'pawTreeNode')][1]")
-            content = node.locator(":scope > .pawTreeNodeContent").first
+        # 3) click en 'Servicios TI' dentro del popup
+        self._click_tree_node(popup, "Servicios TI")
+        
 
-            # si ya está visible, listo
-            if content.is_visible():
-                return
-
-            # click en el icono de expand (img#pawExp) si existe, si no, click header
-            exp = header.locator("img#pawExp").first
-            if exp.count():
-                exp.click()
-            else:
-                header.click()
-
-            # esperar que abra
-            content.wait_for(state="visible", timeout=10_000)
-
-        def click_leaf(label: str):
-            header = node_locator_by_label(label)
-            header.wait_for(state="visible", timeout=10_000)
-            # click en el texto (label) suele ser más confiable que en el icono
-            header.locator(".pawTreeNodeLabel").first.click()
-
-        # 3) recorrer ruta: expandir intermedios y click en el último
-        #    (todos menos el último se expanden)
-        for i, label in enumerate(path):
-            is_last = (i == len(path) - 1)
-            if is_last:
-                click_leaf(label)
-            else:
-                expand_if_needed(label)
-
-
+    def _click_tree_node(self, popup, text, timeout=10_000):
+        node_label = popup.locator(".pawTreeNodeHeader .pawTreeNodeLabel",).filter(has_text=text).first
+        node_label.wait_for(state="visible", timeout=timeout)
+        # node_label.click()
+        print(node_label)
 
     def _go_home(self):
-        self.page.goto(URL_PROACTIVA, wait_until="domcontentloaded", timeout=60_000)
+        pass
+        # self.page.goto(URL_PROACTIVA, wait_until="domcontentloaded", timeout=60_000)
