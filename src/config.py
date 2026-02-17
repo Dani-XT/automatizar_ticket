@@ -26,7 +26,7 @@ REQUIRED_COLUMNS = [
     "HORA",
     "PROBLEMA",
     "SOLUCION",
-    "TECNICO"
+    "TECNICO",
 ]
 
 CORE_COLUMNS = [
