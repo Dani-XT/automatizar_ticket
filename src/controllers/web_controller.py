@@ -21,6 +21,9 @@ from src.helpers.web_helpers import (
     click_radio_btn
 )
 
+from src.helpers.datetime_helpers import parse_excel_date_text
+
+
 from src.models.ticket_job import TicketJob
 
 from src.utils.context_manager import timed
@@ -52,6 +55,7 @@ class WebController:
 
         print("✅ WebController listo")
 
+    # TODO: Modificar para que tambien cerre la conexion con playwright ya que me da problema con API 
     def close(self):
         print("🧹 Cerrando navegador...")
         try:
@@ -106,8 +110,7 @@ class WebController:
     # =========================
     def _wait_for_login_and_save_state(self):
         """
-        Espera a que aparezca #newIncident (en cualquier frame).
-        Si aparece, guarda storage_state para evitar MFA en próximas ejecuciones.
+        Espera a que aparezca #newIncident (en cualquier frame). Si aparece, guarda storage_state para evitar MFA en próximas ejecuciones.
         """
         print("🔐 Esperando login del usuario (manual si aplica)...")
         locator = None
@@ -149,6 +152,8 @@ class WebController:
     def open_new_incident(self):
         print("🆕 Abriendo nueva incidencia...")
 
+        locator = self._wait_for_new_incident(timeout_ms=60_000)
+
         locator, frame = find_in_all_frames(self.page, "#newIncident")
         if not locator:
             raise RuntimeError("No se encontró #newIncident.")
@@ -164,12 +169,11 @@ class WebController:
 
         if not excel_date:
             current_text = get_label_txt(self.page, selector="#creationDate #pawTheTgt", timeout_ms=10_000)
-            print(f"Sin fecha, current_text {current_text}")
+            print(f"Sin fecha en excel, fecha asignada {current_text}")
             return current_text
         
         if isinstance(excel_date, str):
-            s = excel_date.strip().replace("-", "/")
-            excel_date = datetime.strptime(s, "%d/%m/%Y").date()
+            excel_date = parse_excel_date_text(excel_date)
 
             print("Excel_date de isinstance", excel_date)
         
@@ -182,12 +186,11 @@ class WebController:
         self._calendar_goto_hours_minute(excel_time)
 
         final_text = get_label_txt(self.page, selector="#creationDate #pawTheTgt", timeout_ms=10_000)
-        print(f"creationDate final: {final_text}")
         return final_text 
 
     # POPUPS
     def _open_creation_date_popup(self):
-        print("🆕 Abriendo DateTime...")
+        print("🆕 Abriendo Fecha...")
         locator, frame = find_in_all_frames(self.page, "#creationDate button[paw\\:handler='pawDataFieldDate_btnShowPopCal']")
         if not locator:
             raise RuntimeError("No se encontro #creationDate #pawTheTgt (ni en main frame ni en iframes).")
@@ -197,6 +200,7 @@ class WebController:
         return popup
     
     def _open_creation_hours_popup(self):
+        print("🆕 Abriendo Horas...")
         locator, frame = find_in_all_frames(self.page, "#creationDate button[paw\\:handler='pawDataFieldDate_btnShowPopHours']")
         if not locator:
             raise RuntimeError("No se encontro BOTON de Horas")
@@ -206,6 +210,7 @@ class WebController:
         return popup
 
     def _open_creation_minutes_popup(self):
+        print("🆕 Abriendo Minutos...")
         locator, frame = find_in_all_frames(self.page, "#creationDate button[paw\\:handler='pawDataFieldDate_btnShowPopMinutes']")
         if not locator:
             raise RuntimeError("No se encontro BOTON de mINUTOS")
@@ -273,6 +278,7 @@ class WebController:
     
     # selecciona la persona que notifico el problema
     def goto_notificado_por(self):
+        print("🆕 Abriendo Notificado Por...")
         popup = self._open_notificado_por_popup()
         self._select_notificado_por(popup)
 
@@ -303,7 +309,7 @@ class WebController:
 
     # ingresa el titulo y descripcion de incidencia
     def select_titulo_descripcion(self, job: TicketJob):
-        
+        print("🆕 Seleccionando Titulo...")
         problema = job.data.get("PROBLEMA").strip()
         titulo = problema[:256]
 
@@ -319,6 +325,7 @@ class WebController:
         locator.type(titulo, delay=0)
         
         # Descripcion
+        print("🆕 Abriendo Descripcion...")
         locator, _ = find_in_all_frames(self.page, "#description")
         if not locator:
             raise RuntimeError("No se encontró #description (Descripción)")
@@ -329,6 +336,7 @@ class WebController:
 
     # selecciona el tipo de solicitud
     def select_tipo_solicitud_servicio(self):
+        print("🆕 Abriendo Solicitud de Servicio...")
         btn, frame = find_in_all_frames(self.page, "#padTypes_id button#pawTheBtn")
         if not btn:
             raise RuntimeError("No se encontró el botón del dropdown Tipo (#padTypes_id #pawTheBtn)")
@@ -339,6 +347,7 @@ class WebController:
 
     # selecciona la categoria de la solicitud
     def select_categoria(self):
+        print("🆕 Abriendo Categorias...")
         btn, btn_frame = find_in_all_frames(self.page,'table#padPortfolio_id button[paw\\:handler="pawDataFieldDropDownBrowser_btnShowPopTree"]')
         if not btn:
             raise RuntimeError("No se encontró el botón de servicio categoría (tree)")
@@ -358,6 +367,7 @@ class WebController:
 
     # selecciona el servicio a realizar
     def select_servicio(self):
+        print("🆕 Abriendo Servicios...")
         btn, btn_frame = find_in_all_frames(self.page, 'table#padCategories_id button[paw\\:handler="pawDataFieldDropDownBrowser_btnShowPopTree"]')
         if not btn:
             raise RuntimeError("No se encontro el boton de Categorias")
@@ -370,11 +380,11 @@ class WebController:
 
     # selecciona grupo responsable y usuario
     def goto_grupo_responsable(self):
+        print("🆕 Abriendo Grupo Responsable...")
         click_radio_btn(self.page, "dfrb_FirstLineActionScale", timeout=10_000)
         self.page.wait_for_timeout(400)
 
         tecnico = get_label_txt(self.page, selector="span#pawTheUserInfoLabel", timeout_ms=10_000)
-        print(tecnico)
         popup = self._open_grupo_responsable_popup()
         self._select_grupo_responsable(popup)
 
@@ -392,6 +402,7 @@ class WebController:
         return popup
     
     def _open_tecnico_encargado(self):
+        print("🆕 Abriendo Tecnico Encargado...")
         btn, btn_frame = find_in_all_frames(self.page, 'table#pawSvcAuthUsers_idResponsible button[paw\\:handler="pawDataFieldDropDownBrowser_btnShowPopSel"]')
         if not btn:
             raise RuntimeError("No se encontró botón PopSel para Técnico de 2ª línea")
@@ -428,12 +439,12 @@ class WebController:
         select_popup_option_by_attr_contains(popup=popup, attr="paw:label", needle=tecnico, timeout_ms=20_000, case_insensitive=True)
 
     def crear_ticket(self):
-        pass
+        print("✅ Ticket creado correctamente")
+
 
     def cerrar_ticket(self):
         pass
 
 
     def _go_home(self):
-        pass
-        # self.page.goto(URL_PROACTIVA, wait_until="domcontentloaded", timeout=60_000)
+        self.page.goto(URL_PROACTIVA, wait_until="domcontentloaded", timeout=60_000)

@@ -1,5 +1,5 @@
-FECHA,HORA,PROBLEMA,SOLUCION,TICKET
-2025-12-30,15:01:00.000000000,"El presente correo tiene por objetivo informar la finalización del proceso de reclutamiento y selección, de acuerdo a las condiciones detalladas a continuación.
+EXCEL_ROW,FECHA,HORA,PROBLEMA,SOLUCION,TICKET
+11,2025-12-30,15:01:00.000000000,"El presente correo tiene por objetivo informar la finalización del proceso de reclutamiento y selección, de acuerdo a las condiciones detalladas a continuación.
 
 Es importante revisar la fecha de ingreso indicada, para asegurar la disponibilidad de las herramientas tecnológicas y la creación de la cuenta correspondiente para la adecuada incorporación del nuevo colaborador a la institución.
 
@@ -25,15 +25,15 @@ Rut 12.885.268-9
 Contacto +56968485827
 luismarinm@gmail.com
 Fecha Ingreso 05-01-2026",Ticket duplicado,
-2026-01-02,15:20:00.000000000,"Docente solicita asistencia por problemas con PC de sala, al poner en pantalla completa un PPT este se queda pegado.",Al llegar a la sala se reinicia el equipo docente y queda operativa la presentación,
-2026-01-02,16:26:00.000000000,Actualizacion de Windows defender por solicitud de ciberseguridad,"Se realiza la actualizacion de Windows Defender del equipo R-ABASTECIMIENTO_NB, se aplica el parche y se verifican las configuraciones optimas",
-2026-01-02,17:37:00.000000000,Docente solicita asistencia por problemas de transmision entre PC de sala y pantallas de apoyo.,Al llegar a la sala se configura el duplicado de pantalla y queda operativa la clase,
-2026-01-05,15:25:00.000000000,Docente solicita asistencia por problemas con audio del equipo.,"Al llegar la usuaria tiene equipo personal conectado a pantallas de sala pero el sistema de audio se encuentra conectado al equipo de sala, se le explica la situacion a usuaria y queda operativa la clase.",
-2026-01-05,15:27:00.000000000,Revisión de equipo por ciberseguridad,"Se comprueba que las configuraciones optimas esten aplicadas en el equipo de la usuaria Ingrid Sepulveda, se recopila evidencia y queda operativo el equipo.",
-2026-01-05,15:29:00.000000000,Revisión de equipo por ciberseguridad,"Se comprueba que las configuraciones optimas esten aplicadas en el equipo del usuario Roberto Gomez, se recopila evidencia y queda operativo el equipo.",
-2026-01-05,15:30:00.000000000,Entrega de equipo administrativo por requerimiento de ticket REQ 2025-229911,"Se realiza la entrega de equipo administrativo a usuario Luis Marín Mainguyague, se actualizan datos en Proactivanet y se adjunta evidencia.",
-2026-01-05,15:32:00.000000000,Entrega de celular administrativo por requerimiento de ticket REQ 2025-231043,"Se realiza la entrega de celular y tarjeta SIM a usuario Luis Marín Mainguyague, se actualizan datos en Proactivanet y se adjunta evidencia.",
-,,"Se realizan los procedimientos indicados en los siguientes equipos:
+12,2026-01-02,15:20:00.000000000,"Docente solicita asistencia por problemas con PC de sala, al poner en pantalla completa un PPT este se queda pegado.",Al llegar a la sala se reinicia el equipo docente y queda operativa la presentación,
+13,2026-01-02,16:26:00.000000000,Actualizacion de Windows defender por solicitud de ciberseguridad,"Se realiza la actualizacion de Windows Defender del equipo R-ABASTECIMIENTO_NB, se aplica el parche y se verifican las configuraciones optimas",
+14,2026-01-02,17:37:00.000000000,Docente solicita asistencia por problemas de transmision entre PC de sala y pantallas de apoyo.,Al llegar a la sala se configura el duplicado de pantalla y queda operativa la clase,
+15,2026-01-05,15:25:00.000000000,Docente solicita asistencia por problemas con audio del equipo.,"Al llegar la usuaria tiene equipo personal conectado a pantallas de sala pero el sistema de audio se encuentra conectado al equipo de sala, se le explica la situacion a usuaria y queda operativa la clase.",
+16,2026-01-05,15:27:00.000000000,Revisión de equipo por ciberseguridad,"Se comprueba que las configuraciones optimas esten aplicadas en el equipo de la usuaria Ingrid Sepulveda, se recopila evidencia y queda operativo el equipo.",
+17,2026-01-05,15:29:00.000000000,Revisión de equipo por ciberseguridad,"Se comprueba que las configuraciones optimas esten aplicadas en el equipo del usuario Roberto Gomez, se recopila evidencia y queda operativo el equipo.",
+18,2026-01-05,15:30:00.000000000,Entrega de equipo administrativo por requerimiento de ticket REQ 2025-229911,"Se realiza la entrega de equipo administrativo a usuario Luis Marín Mainguyague, se actualizan datos en Proactivanet y se adjunta evidencia.",
+19,2026-01-05,15:32:00.000000000,Entrega de celular administrativo por requerimiento de ticket REQ 2025-231043,"Se realiza la entrega de celular y tarjeta SIM a usuario Luis Marín Mainguyague, se actualizan datos en Proactivanet y se adjunta evidencia.",
+20,,,"Se realizan los procedimientos indicados en los siguientes equipos:
 
 r-isepulveda-nb
 
@@ -43,8 +43,8 @@ r-isepulveda-nb
 r-robertogomez_nb
 
 [cid:5631484a-274b-4b60-96dd-dc140e55cb7d][cid:5a691561-7ed2-4b2a-abbb-10f0afbad32f][cid:001182f1-281c-4891-b438-fd0a564c4160]",Ticket duplicado,
-,,"Se realizan los procedimientos indicados en el siguiente equipo:
+21,,,"Se realizan los procedimientos indicados en el siguiente equipo:
 
 r-dcartagen_nb",Ticket duplicado,
-,,Revisión de equipo por ciberseguridad,"Se comprueba que las configuraciones optimas esten aplicadas en el equipo del usuario Jose Espinoza, se recopila evidencia y queda operativo el equipo.",
-,,Entrega de equipo administrativo por requerimiento de ticket REQ 2025-223769,"Se realiza la entrega de equipo administrativo a la usuaria Mariana Aravena, se actualizan datos en Proactivanet y se adjunta evidencia.",
+22,,,Revisión de equipo por ciberseguridad,"Se comprueba que las configuraciones optimas esten aplicadas en el equipo del usuario Jose Espinoza, se recopila evidencia y queda operativo el equipo.",
+23,,,Entrega de equipo administrativo por requerimiento de ticket REQ 2025-223769,"Se realiza la entrega de equipo administrativo a la usuaria Mariana Aravena, se actualizan datos en Proactivanet y se adjunta evidencia.",
