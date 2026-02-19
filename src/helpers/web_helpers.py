@@ -4,6 +4,7 @@ from playwright.sync_api import TimeoutError as PWTimeoutError
 
 from src.config import MONTHS_ES_INV
 
+# Obtiene el navegador por defecto
 def get_default_browser() -> str | None:
     try:
         key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\Shell\Associations\UrlAssociations\https\UserChoice")
@@ -12,17 +13,39 @@ def get_default_browser() -> str | None:
         prog_id = prog_id.lower()
 
         if "chrome" in prog_id:
-            return "chrome"
+            browser_channel = "chrome"
         if "edge" in prog_id:
-            return "msedge"
+            browser_channel = "msedge"
+    
+        if not browser_channel:
+            if chrome_installed():
+                browser_channel = "chrome"
+            else:
+                raise RuntimeError("No se detecto un navegador compatible. Instala Google Chrome o Microsoft Edge")
+
+        return browser_channel
+    
     except Exception:
         pass
+
     return None
 
+# Verifica si existe una sesion o hay que registrarse
+def get_sesion(state_path: Path):
+    context_kwargs = {"viewport": None}
+
+    if state_path.exists():
+        context_kwargs["storage_state"] = str(state_path)
+        print(f"🔁 Usando sesión guardada: {state_path.name}")
+    
+    return context_kwargs
+
+# Revisa si chrome esta instalado
 def chrome_installed() -> bool:
     return Path(r"C:\Program Files\Google\Chrome\Application\chrome.exe").exists() \
         or Path(r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe").exists()
 
+# ----- | WEB | -----
 def find_in_all_frames(page, css_selector: str):
     loc = page.main_frame.locator(css_selector)
     try:
@@ -43,6 +66,8 @@ def find_in_all_frames(page, css_selector: str):
     return None, None
 
 
+
+
 def wait_visible_enabled(page, locator, timeout_ms: int):
     locator.wait_for(state="visible", timeout=timeout_ms)
     page.wait_for_timeout(200)
@@ -60,25 +85,6 @@ def wait_visible_enabled(page, locator, timeout_ms: int):
         waited += step
 
     raise PWTimeoutError("Locator visible pero no habilitado a tiempo")
-
-
-def debug_dump(page, tag: str, out_dir: Path | None = None):
-    out_dir = out_dir or Path(".")
-    out_dir.mkdir(parents=True, exist_ok=True)
-
-    try:
-        png = out_dir / f"debug_{tag}.png"
-        page.screenshot(path=str(png), full_page=True)
-        print(f"📸 Screenshot: {png}")
-    except Exception:
-        pass
-
-    try:
-        html = out_dir / f"debug_{tag}.html"
-        html.write_text(page.content(), encoding="utf-8")
-        print(f"📄 HTML: {html}")
-    except Exception:
-        pass
 
 
 def smart_click(locator, frame=None, expect_nav: bool = False, nav_timeout_ms: int = 30_000):

@@ -4,7 +4,7 @@ from datetime import datetime, date, time
 from src.config import URL_PROACTIVA, WEB_STORAGE_DIR
 from src.helpers.web_helpers import (
     get_default_browser,
-    chrome_installed,
+    get_sesion,
     find_in_all_frames,
     wait_visible_enabled,
     smart_click,
@@ -55,7 +55,7 @@ class WebController:
 
         print("✅ WebController listo")
 
-    # TODO: Modificar para que tambien cerre la conexion con playwright ya que me da problema con API 
+    # TODO: Modificar para que tambien cerre la conexion con playwright ya que me da problema con ASYNC
     def close(self):
         print("🧹 Cerrando navegador...")
         try:
@@ -71,12 +71,6 @@ class WebController:
         """ Selecciona el navegador a utilizar """
         browser_channel = get_default_browser()
 
-        if not browser_channel:
-            if chrome_installed():
-                browser_channel = "chrome"
-            else:
-                raise RuntimeError("No se detecto un navegador compatible. Instala Google Chrome o Microsoft Edge")
-        
         print(f"🧭 Navegador: {browser_channel}")
 
         return self.playwright.chromium.launch(
@@ -90,12 +84,7 @@ class WebController:
     
     def _get_context(self):
         """ Decide si existe una sesion ya iniciada o se tiene que iniciar una """
-        context_kwargs = {"viewport": None}
-
-        if self.state_path.exists():
-            context_kwargs["storage_state"] = str(self.state_path)
-            print(f"🔁 Usando sesión guardada: {self.state_path.name}")
-
+        context_kwargs = get_sesion(self.state_path)
         return self.browser.new_context(**context_kwargs)
 
     def _save_context(self):
